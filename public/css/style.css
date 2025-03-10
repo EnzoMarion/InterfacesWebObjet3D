@@ -8,7 +8,7 @@ body {
 }
 
 header {
-  height: 60px; /* Hauteur fixe */
+  height: 60px;
   background-color: #333;
   color: white;
   display: flex;
@@ -18,7 +18,7 @@ header {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 10; /* Au-dessus du canvas */
+  z-index: 10;
 }
 
 header h1 {
@@ -28,8 +28,8 @@ header h1 {
 
 #renderCanvas {
   width: 100%;
-  height: calc(100vh - 60px); /* Toute la hauteur moins le header */
+  height: calc(100vh - 60px);
   position: absolute;
-  top: 60px; /* Décalé sous le header */
+  top: 60px;
   left: 0;
 }
