@@ -4,43 +4,32 @@ body {
   overflow: hidden;
   height: 100vh;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+}
+
+header {
+  height: 60px; /* Hauteur fixe */
+  background-color: #333;
+  color: white;
+  display: flex;
   align-items: center;
-  background-color: #fff;
+  padding: 0 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10; /* Au-dessus du canvas */
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.5em;
 }
 
 #renderCanvas {
-  width: 70%;
-  height: 70vh;
-  border: 1px solid #ccc; /* Optionnel : pour voir les limites */
-}
-
-#interface {
-  width: 30%;
-  padding: 20px;
-  background-color: #f0f0f0;
-  box-sizing: border-box;
-  height: 70vh;
-  overflow-y: auto;
-}
-
-#interface h1 {
-  font-size: 1.5em;
-  margin-bottom: 20px;
-}
-
-#interface p {
-  margin: 0 0 20px;
-}
-
-#interface button {
-  padding: 10px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-#interface button:hover {
-  background-color: #0056b3; /* Équivalent à darken(#007bff, 10%) */
+  width: 100%;
+  height: calc(100vh - 60px); /* Toute la hauteur moins le header */
+  position: absolute;
+  top: 60px; /* Décalé sous le header */
+  left: 0;
 }
