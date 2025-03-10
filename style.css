@@ -1,0 +1,46 @@
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #fff;
+}
+
+#renderCanvas {
+  width: 70%;
+  height: 70vh;
+  border: 1px solid #ccc; /* Optionnel : pour voir les limites */
+}
+
+#interface {
+  width: 30%;
+  padding: 20px;
+  background-color: #f0f0f0;
+  box-sizing: border-box;
+  height: 70vh;
+  overflow-y: auto;
+}
+
+#interface h1 {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+}
+
+#interface p {
+  margin: 0 0 20px;
+}
+
+#interface button {
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+#interface button:hover {
+  background-color: #0056b3; /* Équivalent à darken(#007bff, 10%) */
+}
