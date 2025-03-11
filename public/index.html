@@ -1,39 +1,24 @@
-<!-- public/index.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Musée égyptien virtuel</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <title>Musée Égyptien 3D</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:,">
 </head>
 <body>
 <header>
-    <h1>Musée de l'Égypte Ancienne</h1>
-    <p>Explorez les trésors de l'ancienne civilisation égyptienne</p>
+    <h1>Musée Égyptien</h1>
 </header>
-
-<div id="scene-container">
-    <canvas id="renderCanvas"></canvas>
-
-    <div id="info-panel" class="hidden">
-        <div id="close-btn">✕</div>
-        <h2 id="artifact-title">Nom de l'artefact</h2>
-        <img id="artifact-image" src="" alt="Image de l'artefact">
-        <p id="artifact-description">Description de l'artefact...</p>
-        <div id="artifact-period">Période: </div>
-        <div id="artifact-location">Lieu de découverte: </div>
-        <button id="rotate-btn">Rotation auto</button>
-        <button id="back" style="display: none;">Retour</button>
-    </div>
+<canvas id="renderCanvas"></canvas>
+<div id="info">
+    <h2 id="title">Bienvenue</h2>
+    <p id="description">Clique sur une œuvre pour en savoir plus.</p>
+    <button id="back">Retour</button>
 </div>
-
-<div id="instructions">
-    <p>Cliquez sur un objet pour plus d'informations</p>
-    <p>Utilisez la souris pour vous déplacer: <span>Clic gauche + déplacer = Rotation | Molette = Zoom | Clic droit + déplacer = Translation</span></p>
-</div>
-
+<script src="https://unpkg.com/earcut@2.2.4/dist/earcut.min.js"></script>
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-<script src="/js/script.js"></script>
+<script src="js/script.js"></script>
 </body>
 </html>

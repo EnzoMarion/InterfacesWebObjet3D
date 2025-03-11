@@ -1,45 +1,34 @@
-/* css/style.css */
-* {
+body {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   overflow: hidden;
-  background-color: #222;
-  color: #f0f0f0;
   height: 100vh;
   display: flex;
   flex-direction: column;
+  font-family: 'Papyrus', 'Copperplate', fantasy;
 }
 
 header {
   height: 60px;
-  background: #8B4513;
-  color: #FFD700;
+  background: #C0972F; /* Or égyptien */
+  color: #1F140F; /* Brun foncé */
   display: flex;
   align-items: center;
-  justify-content: center;
+  padding: 0 20px;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 10;
-  border-bottom: 2px solid #DAA520;
+  border-bottom: 4px solid #1F140F;
+  background-image: linear-gradient(to right, #C0972F, #E6C35C, #C0972F);
 }
 
 header h1 {
   margin: 0;
   font-size: 1.8em;
-  font-family: 'Times New Roman', serif;
-  letter-spacing: 1px;
-}
-
-#scene-container {
-  position: relative;
-  flex-grow: 1;
+  letter-spacing: 2px;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
 }
 
 #renderCanvas {
@@ -48,59 +37,55 @@ header h1 {
   position: absolute;
   top: 60px;
   left: 0;
-  touch-action: none;
 }
 
-#info-panel {
+#info {
   position: fixed;
   right: 0;
   top: 60px;
-  width: 300px;
+  width: 25%;
   height: calc(100vh - 60px);
-  background: rgba(245, 222, 179, 0.9);
   padding: 20px;
-  border-left: 2px solid #DAA520;
-  overflow-y: auto;
-  transition: transform 0.3s ease;
+  background: rgba(232, 214, 174, 0.9); /* Papyrus */
+  box-sizing: border-box;
+  display: none; /* Hidden by default */
+  border-left: 3px solid #C0972F;
+  color: #3A291B;
+  box-shadow: -3px 0 15px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(3px);
 }
 
-#info-panel.hidden {
-  transform: translateX(100%);
+#info h2 {
+  margin: 0 0 15px;
+  border-bottom: 2px solid #C0972F;
+  padding-bottom: 8px;
+  font-size: 1.5em;
+  color: #1F140F;
+  letter-spacing: 1px;
 }
 
-#close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  cursor: pointer;
-  font-size: 20px;
-  color: #DAA520;
-}
-
-#artifact-title {
-  margin-bottom: 15px;
-  color: #8B4513;
-  font-family: 'Times New Roman', serif;
-  padding-bottom: 5px;
-  border-bottom: 1px solid #DAA520;
-}
-
-#artifact-description {
-  margin-bottom: 15px;
+#info p {
+  margin: 0 0 20px;
   line-height: 1.5;
+  font-size: 1.1em;
 }
 
-#rotate-btn, #back {
-  background-color: #FFD700;
-  color: #333;
-  border: none;
-  padding: 8px 16px;
+#info button {
+  padding: 8px 15px;
+  background: #C0972F;
+  color: #1F140F;
+  border: 2px solid #8B4513;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s;
-  margin: 5px 0;
+  font-family: inherit;
+  font-size: 1em;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  letter-spacing: 1px;
 }
 
-#rotate-btn:hover, #back:hover {
-  background-color: #DAA520;
+#info button:hover {
+  background: #D4AA3A;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
 }
