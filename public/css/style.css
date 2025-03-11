@@ -1,0 +1,91 @@
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Papyrus', 'Copperplate', fantasy;
+}
+
+header {
+  height: 60px;
+  background: #C0972F; /* Or égyptien */
+  color: #1F140F; /* Brun foncé */
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  border-bottom: 4px solid #1F140F;
+  background-image: linear-gradient(to right, #C0972F, #E6C35C, #C0972F);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.8em;
+  letter-spacing: 2px;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+#renderCanvas {
+  width: 100%;
+  height: calc(100vh - 60px);
+  position: absolute;
+  top: 60px;
+  left: 0;
+}
+
+#info {
+  position: fixed;
+  right: 0;
+  top: 60px;
+  width: 25%;
+  height: calc(100vh - 60px);
+  padding: 20px;
+  background: rgba(232, 214, 174, 0.9); /* Papyrus */
+  box-sizing: border-box;
+  display: none; /* Hidden by default */
+  border-left: 3px solid #C0972F;
+  color: #3A291B;
+  box-shadow: -3px 0 15px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(3px);
+}
+
+#info h2 {
+  margin: 0 0 15px;
+  border-bottom: 2px solid #C0972F;
+  padding-bottom: 8px;
+  font-size: 1.5em;
+  color: #1F140F;
+  letter-spacing: 1px;
+}
+
+#info p {
+  margin: 0 0 20px;
+  line-height: 1.5;
+  font-size: 1.1em;
+}
+
+#info button {
+  padding: 8px 15px;
+  background: #C0972F;
+  color: #1F140F;
+  border: 2px solid #8B4513;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1em;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  letter-spacing: 1px;
+}
+
+#info button:hover {
+  background: #D4AA3A;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+}
