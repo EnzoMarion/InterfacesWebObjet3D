@@ -8,7 +8,11 @@ var createScene = function () {
     var camera = new BABYLON.ArcRotateCamera("camera", Math.PI / 4, Math.PI / 3, 40, BABYLON.Vector3.Zero(), scene);
     camera.attachControl(canvas, true);
     camera.lowerRadiusLimit = 4;
+<<<<<<< HEAD
     camera.upperRadiusLimit = 150;
+=======
+    camera.upperRadiusLimit = 200;
+>>>>>>> master
     camera.wheelPrecision = 10;
 
     var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
@@ -19,7 +23,11 @@ var createScene = function () {
     dirLight.intensity = 0.5;
     dirLight.diffuse = new BABYLON.Color3(1, 0.95, 0.8);
 
+<<<<<<< HEAD
     var ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 60, height: 60, subdivisions: 10 }, scene);
+=======
+    var ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100, subdivisions: 10 }, scene);
+>>>>>>> master
     var groundMat = new BABYLON.StandardMaterial("groundMat", scene);
     var groundTexture = new BABYLON.DynamicTexture("groundTexture", { width: 1024, height: 1024 }, scene);
     var gtx = groundTexture.getContext();
@@ -41,8 +49,13 @@ var createScene = function () {
     groundMat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
     ground.material = groundMat;
 
+<<<<<<< HEAD
     var pyramidHeight = 45;
     var pyramidBaseWidth = 60;
+=======
+    var pyramidHeight = 75;
+    var pyramidBaseWidth = 100;
+>>>>>>> master
 
     var pyramid = BABYLON.MeshBuilder.CreatePolyhedron("pyramid", {
         custom: {
@@ -109,13 +122,20 @@ var createScene = function () {
     }
 
     var positions = [
+<<<<<<< HEAD
         [-24, 3, -18], [-24, 3, 0], [-24, 3, 18],
         [24, 3, -18], [24, 3, 0], [24, 3, 18],
         [-18, 3, 24], [0, 3, 24], [18, 3, 24],
+=======
+        [-35, 3, -30], [-35, 3, 0], [-35, 3, 30],
+        [35, 3, -30], [35, 3, 0], [35, 3, 30],
+        [-30, 3, 35], [0, 3, 35], [30, 3, 35],
+>>>>>>> master
         [0, 3, 0]
     ];
 
     var artifactData = [
+<<<<<<< HEAD
         { name: "Masque de Toutânkhamon", desc: "Le célèbre masque funéraire en or du pharaon Toutânkhamon, datant d'environ 1323 av. J.-C." },
         { name: "Statuette d'Anubis", desc: "Représentation du dieu Anubis, gardien des nécropoles et guide des âmes dans l'au-delà." },
         { name: "Scarabée sacré", desc: "Amulette en forme de scarabée, symbole de renaissance et de transformation." },
@@ -126,6 +146,18 @@ var createScene = function () {
         { name: "Vase canope", desc: "Récipient utilisé durant la momification pour conserver les organes." },
         { name: "Statue de Bastet", desc: "Déesse à tête de chat, protectrice du foyer." },
         { name: "Pierre de Rosette", desc: "Reproduction de la pierre qui a permis de déchiffrer les hiéroglyphes." }
+=======
+        { name: "Statue de Bastet déesse", desc: "Statue représentant Bastet, déesse égyptienne à tête de chat, protectrice du foyer et symbole de la douceur domestique, datant de la période tardive." },
+        { name: "Pyramidion de Ptahemwia", desc: "Pyramidion en pierre, sommet d’une pyramide ou d’un tombeau, appartenant à Ptahemwia, un haut fonctionnaire de la XVIIIe dynastie, orné de symboles solaires." },
+        { name: "Scarabée sacré", desc: "Amulette en forme de scarabée, symbole de renaissance et de transformation, souvent utilisée dans les rituels funéraires égyptiens." },
+        { name: "Table d'offrande par Defdji", desc: "Table d’offrande en pierre dédiée par Defdji, prêtre de l’Ancien Empire, utilisée pour présenter des offrandes aux défunts dans les tombes." },
+        { name: "Buste ptolémaïque", desc: "Buste sculpté d’un dignitaire ou d’une divinité de l’époque ptolémaïque, mêlant styles grec et égyptien, datant d’environ 300-30 av. J.-C." },
+        { name: "Sarcophage miniature", desc: "Reproduction d’un sarcophage égyptien décoré de hiéroglyphes, utilisé pour abriter les momies dans les tombes royales." },
+        { name: "Tablette hiéroglyphique", desc: "Pierre gravée de textes hiéroglyphiques anciens, probablement une stèle commémorative ou un décret royal." },
+        { name: "Maquette de bateau d'Égypte", desc: "Maquette en bois d’un bateau égyptien, symbole du voyage dans l’au-delà, souvent placée dans les tombes pour accompagner le défunt." },
+        { name: "Statue de Neith déesse", desc: "Statue de Neith, déesse de la guerre et de la chasse, représentée avec un arc et des flèches, vénérée dès l’époque prédynastique." },
+        { name: "Ramsès II Egyptian statue", desc: "Statue colossale de Ramsès II, pharaon de la XIXe dynastie, symbole de puissance et de divinité, érigée dans les temples de l’Égypte antique." }
+>>>>>>> master
     ];
 
     var artifacts = [];
@@ -139,6 +171,7 @@ var createScene = function () {
             var model = task.loadedMeshes[0];
             var scaleFactor;
             var artifactName = artifactData[index].name;
+<<<<<<< HEAD
             if (["Masque de Toutânkhamon", "Pierre de Rosette", "Statuette d'Anubis", "Vase canope", "Statue de Bastet"].includes(artifactName)) {
                 scaleFactor = 1.5;
             } else if (artifactName === "Buste de Néfertiti") {
@@ -149,6 +182,22 @@ var createScene = function () {
                 scaleFactor = 0.01;
             } else if (artifactName === "Sarcophage miniature") {
                 scaleFactor = 0.009;
+=======
+            if (["Ramsès II Egyptian statue", "Pyramidion de Ptahemwia", "Scarabée sacré"].includes(artifactName)) {
+                scaleFactor = 1.5;
+            } else if (artifactName === "Table d'offrande par Defdji") {
+                scaleFactor = 0.1;
+            } else if (artifactName === "Buste ptolémaïque") {
+                scaleFactor = 2.5;
+            } else if (artifactName === "Statue de Bastet déesse") {
+                scaleFactor = 0.03;
+            } else if (["Tablette hiéroglyphique"].includes(artifactName)) {
+                scaleFactor = 0.01;
+            } else if (artifactName === "Sarcophage miniature") {
+                scaleFactor = 0.009;
+            } else if (artifactName === "Maquette de bateau d'Égypte") {
+                scaleFactor = 0.006;
+>>>>>>> master
             } else {
                 scaleFactor = 0.05;
             }
@@ -208,10 +257,17 @@ var createScene = function () {
             "unzoom",
             camera,
             "radius",
+<<<<<<< HEAD
             30,
             40,
             camera.radius,
             30,
+=======
+            60,
+            40,
+            camera.radius,
+            50,
+>>>>>>> master
             BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
         );
         infoPanel.style.display = "none";
@@ -249,5 +305,25 @@ var createScene = function () {
 };
 
 var scene = createScene();
+<<<<<<< HEAD
+=======
+
+var modal = document.getElementById("welcomeModal");
+var closeModalBtn = document.getElementById("closeModal");
+var museumTitle = document.getElementById("museumTitle");
+
+window.onload = function() {
+    modal.style.display = "flex";
+};
+
+closeModalBtn.addEventListener("click", function() {
+    modal.style.display = "none";
+});
+
+museumTitle.addEventListener("click", function() {
+    modal.style.display = "flex";
+});
+
+>>>>>>> master
 engine.runRenderLoop(function () { scene.render(); });
 window.addEventListener("resize", function () { engine.resize(); });
