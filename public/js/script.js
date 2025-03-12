@@ -155,15 +155,15 @@ var createScene = function () {
 
     var artifactData = [
         { name: "Statue de Bastet déesse", desc: "Statue représentant Bastet, déesse égyptienne à tête de chat, protectrice du foyer et symbole de la douceur domestique, datant de la période tardive." },
-        { name: "Pyramidion de Ptahemwia", desc: "Pyramidion en pierre, sommet d'une pyramide ou d'un tombeau, appartenant à Ptahemwia, un haut fonctionnaire de la XVIIIe dynastie, orné de symboles solaires." },
+        { name: "Pyramidion de Ptahemwia", desc: "Pyramidion en pierre, sommet d’une pyramide ou d’un tombeau, appartenant à Ptahemwia, un haut fonctionnaire de la XVIIIe dynastie, orné de symboles solaires." },
         { name: "Scarabée sacré", desc: "Amulette en forme de scarabée, symbole de renaissance et de transformation, souvent utilisée dans les rituels funéraires égyptiens." },
-        { name: "Table d'offrande par Defdji", desc: "Table d'offrande en pierre dédiée par Defdji, prêtre de l'Ancien Empire, utilisée pour présenter des offrandes aux défunts dans les tombes." },
-        { name: "Buste ptolémaïque", desc: "Buste sculpté d'un dignitaire ou d'une divinité de l'époque ptolémaïque, mêlant styles grec et égyptien, datant d'environ 300-30 av. J.-C." },
-        { name: "Sarcophage miniature", desc: "Reproduction d'un sarcophage égyptien décoré de hiéroglyphes, utilisé pour abriter les momies dans les tombes royales." },
+        { name: "Table d'offrande par Defdji", desc: "Table d’offrande en pierre dédiée par Defdji, prêtre de l’Ancien Empire, utilisée pour présenter des offrandes aux défunts dans les tombes." },
+        { name: "Buste ptolémaïque", desc: "Buste sculpté d’un dignitaire ou d’une divinité de l’époque ptolémaïque, mêlant styles grec et égyptien, datant d’environ 300-30 av. J.-C." },
+        { name: "Sarcophage miniature", desc: "Reproduction d’un sarcophage égyptien décoré de hiéroglyphes, utilisé pour abriter les momies dans les tombes royales." },
         { name: "Tablette hiéroglyphique", desc: "Pierre gravée de textes hiéroglyphiques anciens, probablement une stèle commémorative ou un décret royal." },
-        { name: "Maquette de bateau d'Égypte", desc: "Maquette en bois d'un bateau égyptien, symbole du voyage dans l'au-delà, souvent placée dans les tombes pour accompagner le défunt." },
-        { name: "Statue de Neith déesse", desc: "Statue de Neith, déesse de la guerre et de la chasse, représentée avec un arc et des flèches, vénérée dès l'époque prédynastique." },
-        { name: "Ramsès II Egyptian statue", desc: "Statue colossale de Ramsès II, pharaon de la XIXe dynastie, symbole de puissance et de divinité, érigée dans les temples de l'Égypte antique." }
+        { name: "Maquette de bateau d'Égypte", desc: "Maquette en bois d’un bateau égyptien, symbole du voyage dans l’au-delà, souvent placée dans les tombes pour accompagner le défunt." },
+        { name: "Statue de Neith déesse", desc: "Statue de Neith, déesse de la guerre et de la chasse, représentée avec un arc et des flèches, vénérée dès l’époque prédynastique." },
+        { name: "Ramsès II Egyptian statue", desc: "Statue colossale de Ramsès II, pharaon de la XIXe dynastie, symbole de puissance et de divinité, érigée dans les temples de l’Égypte antique." }
     ];
 
     var assetsManager = new BABYLON.AssetsManager(scene);
@@ -269,7 +269,6 @@ var createScene = function () {
     }
 
     function resetView() {
-        console.log("Réinitialisation de la vue...");
         clearTimeout(tourTimeout);
         isTourActive = false;
         selectedArtifact = null;
@@ -283,7 +282,6 @@ var createScene = function () {
         infoPanel.style.display = "none";
         highlightArtifactInList(-1);
         document.exitPointerLock();
-        console.log("Vue réinitialisée. selectedArtifact =", selectedArtifact, "isMouseDown =", isMouseDown);
     }
 
     backButton.addEventListener("click", resetView);
@@ -303,7 +301,6 @@ var createScene = function () {
 
                 animateCamera(mesh.position, new BABYLON.Vector3(mesh.position.x, mesh.position.y + 5, mesh.position.z - 5));
                 highlightArtifactInList(index);
-                console.log("Œuvre sélectionnée via la liste:", mesh.metadata.name);
             }
         }
     });
@@ -338,12 +335,10 @@ var createScene = function () {
     }
 
     window.addEventListener("keydown", function (evt) {
-        if (evt.keyCode === 69) { // Touche E
+        if (evt.keyCode === 69) {
             if (selectedArtifact) {
-                console.log("Touche E pressée alors qu'une œuvre est sélectionnée, retour à la vue normale");
                 resetView();
             } else {
-                console.log("Touche E pressée pour regarder une œuvre proche");
                 var nearestArtifact = null;
                 var minDistance = Infinity;
                 artifacts.forEach((mesh, index) => {
@@ -365,22 +360,19 @@ var createScene = function () {
                     animateCamera(nearestArtifact.position, new BABYLON.Vector3(nearestArtifact.position.x, nearestArtifact.position.y + 5, nearestArtifact.position.z - 5));
                     var index = artifacts.indexOf(nearestArtifact);
                     highlightArtifactInList(index);
-                    console.log("Œuvre sélectionnée:", nearestArtifact.metadata.name);
                 }
             }
         }
     });
 
-    // SECTION MODIFIÉE: Gestion des événements souris
     canvas.addEventListener("mousedown", function (evt) {
-        console.log("Événement mousedown sur canvas - bouton:", evt.button, "selectedArtifact:", !!selectedArtifact);
         if (evt.button === 0) { // Clic gauche
             if (selectedArtifact) {
                 isMouseDown = true;
                 previousMouseX = evt.clientX;
                 previousMouseY = evt.clientY;
                 evt.preventDefault();
-                console.log("Clic gauche enfoncé sur œuvre, isMouseDown =", isMouseDown, "coords:", previousMouseX, previousMouseY);
+                console.log("Clic gauche enfoncé sur œuvre, isMouseDown =", isMouseDown);
             } else {
                 // Mode navigation normale FPS
                 canvas.requestPointerLock = canvas.requestPointerLock || canvas.msRequestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
@@ -392,71 +384,26 @@ var createScene = function () {
     });
 
     window.addEventListener("mouseup", function (evt) {
-        if (evt.button === 0) {
-            if (isMouseDown) {
-                console.log("Clic gauche relâché (global), isMouseDown était:", isMouseDown);
-            }
+        if (evt.button === 0 && isMouseDown) {
             isMouseDown = false;
             previousMouseX = null;
             previousMouseY = null;
+            console.log("Clic gauche relâché (global), isMouseDown =", isMouseDown);
+        }
+    });
+
+    canvas.addEventListener("mouseup", function (evt) {
+        if (evt.button === 0) {
+            isMouseDown = false;
+            previousMouseX = null; // Réinitialiser
+            previousMouseY = null;
+            console.log("Clic gauche relâché, isMouseDown =", isMouseDown);
+            document.exitPointerLock(); // Libérer le pointeur si verrouillé
         }
     });
 
     canvas.addEventListener("mousemove", function (evt) {
-        if (selectedArtifact && isMouseDown) { // Mode rotation autour de l'œuvre
-            console.log("Mouvement souris avec œuvre sélectionnée et clic enfoncé");
-
-            if (previousMouseX !== null && previousMouseY !== null) {
-                var deltaX = (evt.clientX - previousMouseX) * 0.01;
-                var deltaY = (evt.clientY - previousMouseY) * 0.01;
-
-                console.log("Déplacement:", deltaX.toFixed(3), deltaY.toFixed(3));
-
-                // Calculer la position actuelle par rapport à l'œuvre
-                var artifactPos = selectedArtifact.position.clone();
-
-                // Créer un vecteur direction du centre de l'œuvre vers la caméra
-                var direction = camera.position.subtract(artifactPos);
-                var distance = direction.length();
-                direction.normalize();
-
-                // Appliquer rotation horizontale (autour axe Y)
-                var rotationY = BABYLON.Matrix.RotationY(-deltaX);
-                direction = BABYLON.Vector3.TransformCoordinates(direction, rotationY);
-
-                // Trouver un vecteur à droite pour la rotation verticale
-                var right = BABYLON.Vector3.Cross(direction, BABYLON.Vector3.Up()).normalize();
-
-                // Appliquer rotation verticale
-                var rotationX = BABYLON.Matrix.RotationAxis(right, deltaY);
-                direction = BABYLON.Vector3.TransformCoordinates(direction, rotationX);
-
-                // Limiter angle vertical pour éviter de passer par-dessus
-                var dotUp = BABYLON.Vector3.Dot(direction, BABYLON.Vector3.Up());
-                if (Math.abs(dotUp) > 0.9) {
-                    console.log("Limite verticale atteinte:", dotUp);
-                    // Juste appliquer rotation horizontale
-                    direction = BABYLON.Vector3.TransformCoordinates(
-                        camera.position.subtract(artifactPos).normalize(),
-                        rotationY
-                    );
-                }
-
-                // Calculer nouvelle position
-                var newPos = artifactPos.add(direction.scale(distance));
-                camera.position = newPos;
-                camera.setTarget(artifactPos);
-
-                console.log("Nouvelle position caméra:",
-                    newPos.x.toFixed(2),
-                    newPos.y.toFixed(2),
-                    newPos.z.toFixed(2)
-                );
-            }
-
-            previousMouseX = evt.clientX;
-            previousMouseY = evt.clientY;
-        } else if (!selectedArtifact) { // Mode navigation FPS
+        if (!selectedArtifact) { // Mode FPS normal
             // Le code existant pour la navigation FPS
             var sensitivity = 0.002;
             var deltaX = evt.movementX * sensitivity;
@@ -473,9 +420,47 @@ var createScene = function () {
             if (euler.x > Math.PI / 2) euler.x = Math.PI / 2;
             if (euler.x < -Math.PI / 2) euler.x = -Math.PI / 2;
             camera.rotationQuaternion = BABYLON.Quaternion.FromEulerAngles(euler.x, euler.y, euler.z);
+        } else if (selectedArtifact && isMouseDown) { // Mode rotation autour de l'œuvre
+            var deltaX = 0;
+            var deltaY = 0;
+
+            // Calcul du déplacement de la souris
+            if (previousMouseX !== null && previousMouseY !== null) {
+                deltaX = (evt.clientX - previousMouseX) * 0.01;
+                deltaY = (evt.clientY - previousMouseY) * 0.01;
+                previousMouseX = evt.clientX;
+                previousMouseY = evt.clientY;
+            }
+
+            // Calculer la position actuelle par rapport à l'œuvre
+            var direction = camera.position.subtract(selectedArtifact.position);
+            var distance = direction.length();
+            direction.normalize();
+
+            // Créer une matrice de rotation pour le mouvement horizontal (autour de l'axe Y)
+            var rotationMatrixY = BABYLON.Matrix.RotationY(-deltaX);
+
+            // Calculer l'axe de rotation pour le mouvement vertical
+            var right = BABYLON.Vector3.Cross(direction, BABYLON.Vector3.Up()).normalize();
+            var rotationMatrixX = BABYLON.Matrix.RotationAxis(right, deltaY);
+
+            // Appliquer les rotations
+            var newDirection = BABYLON.Vector3.TransformCoordinates(direction, rotationMatrixY);
+            newDirection = BABYLON.Vector3.TransformCoordinates(newDirection, rotationMatrixX);
+
+            // Limiter l'angle vertical
+            var angle = Math.acos(BABYLON.Vector3.Dot(newDirection, BABYLON.Vector3.Up()));
+            if (angle < 0.1 || angle > Math.PI - 0.1) {
+                // Trop près des pôles, ignorer la rotation verticale
+                newDirection = BABYLON.Vector3.TransformCoordinates(direction, rotationMatrixY);
+            }
+
+            // Calculer la nouvelle position de la caméra
+            var newPosition = selectedArtifact.position.add(newDirection.scale(distance));
+            camera.position = newPosition;
+            camera.setTarget(selectedArtifact.position);
         }
     });
-    // FIN SECTION MODIFIÉE
 
     canvas.addEventListener("wheel", function (evt) {
         if (selectedArtifact) {
@@ -489,7 +474,6 @@ var createScene = function () {
             camera.position = selectedArtifact.position.add(direction.scale(distance));
             camera.setTarget(selectedArtifact.position);
             evt.preventDefault();
-            console.log("Zoom ajusté, nouvelle distance:", distance.toFixed(2));
         }
     });
 
@@ -561,6 +545,15 @@ var createScene = function () {
             }
         }
         nextStep();
+    });
+
+    canvas.addEventListener("click", function (evt) {
+        if (!selectedArtifact) {
+            canvas.requestPointerLock = canvas.requestPointerLock || canvas.msRequestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+            if (canvas.requestPointerLock) {
+                canvas.requestPointerLock();
+            }
+        }
     });
 
     return scene;
