@@ -19,9 +19,22 @@ var createScene = function () {
     dirLight.intensity = 0.5;
     dirLight.diffuse = new BABYLON.Color3(1, 0.95, 0.8);
 
-    // Création du sol
-    var ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 60, height: 60, subdivisions: 10 }, scene);
+    // Création du sol avec plus de subdivisions et crevasses
+    var ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 60, height: 60, subdivisions: 150 }, scene);
     var groundMat = new BABYLON.StandardMaterial("groundMat", scene);
+    groundMat.diffuseColor = new BABYLON.Color3(0.93, 0.83, 0.68); // Couleur par défaut si la texture échoue
+    groundMat.diffuseTexture = new BABYLON.Texture("./assets/sand_diffuse.jpg", scene);
+    groundMat.diffuseTexture.uScale = 10;
+    groundMat.diffuseTexture.vScale = 10;
+    groundMat.bumpTexture = new BABYLON.Texture("./assets/sand_normal.jpg", scene);
+    groundMat.bumpTexture.uScale = 10;
+    groundMat.bumpTexture.vScale = 10;
+    groundMat.displacementMap = new BABYLON.Texture("./assets/sand_displacement.svg", scene);
+    groundMat.displacementMap.uScale = 10;
+    groundMat.displacementMap.vScale = 10;
+    groundMat.displacementMapLevel = 2; // Plus de crevasses
+    groundMat.specularColor = new BABYLON.Color3(0, 0, 0);
+    groundMat.specularPower = 0;
     ground.material = groundMat;
 
     // Création de la pyramide
@@ -30,10 +43,10 @@ var createScene = function () {
     var pyramid = BABYLON.MeshBuilder.CreatePolyhedron("pyramid", {
         custom: {
             "vertex": [
-                [-pyramidBaseWidth/2, 0, -pyramidBaseWidth/2],
-                [pyramidBaseWidth/2, 0, -pyramidBaseWidth/2],
-                [pyramidBaseWidth/2, 0, pyramidBaseWidth/2],
-                [-pyramidBaseWidth/2, 0, pyramidBaseWidth/2],
+                [-pyramidBaseWidth / 2, 0, -pyramidBaseWidth / 2],
+                [pyramidBaseWidth / 2, 0, -pyramidBaseWidth / 2],
+                [pyramidBaseWidth / 2, 0, pyramidBaseWidth / 2],
+                [-pyramidBaseWidth / 2, 0, pyramidBaseWidth / 2],
                 [0, pyramidHeight, 0]
             ],
             "face": [
@@ -45,84 +58,25 @@ var createScene = function () {
         },
         sideOrientation: BABYLON.Mesh.DOUBLESIDE
     }, scene);
+
     var pyramidMat = new BABYLON.StandardMaterial("pyramidMat", scene);
+    pyramidMat.diffuseColor = new BABYLON.Color3(1, 1, 1); // Couleur blanche par défaut
     pyramid.material = pyramidMat;
 
-    // Chargement et application des matériaux
-    BABYLON.SceneLoader.ImportMeshAsync("", "./assets/", "sand_material.glb", scene).then((result) => {
-        const loadedMeshes = result.meshes;
-        if (loadedMeshes.length > 0 && loadedMeshes[0].material) {
-            const material = loadedMeshes[0].material;
-            console.log("Matériau pour le sol :", material);
-            console.log("Diffuse Texture :", material.diffuseTexture);
-            console.log("Bump Texture :", material.bumpTexture);
+    // Fonction pour créer les piédestaux à partir du fichier pedestal.glb
+    async function createPedestal(position, height = 2) {
+        const result = await BABYLON.SceneLoader.ImportMeshAsync("", "./assets/", "pedestal.glb", scene);
+        const pedestal = result.meshes[0];
 
-            if (material.diffuseTexture) {
-                groundMat.diffuseTexture = material.diffuseTexture;
-                groundMat.diffuseTexture.uScale = 10;
-                groundMat.diffuseTexture.vScale = 10;
-            }
-            groundMat.diffuseColor = material.diffuseColor || new BABYLON.Color3(1, 1, 1);
-            if (material.bumpTexture) {
-                groundMat.bumpTexture = material.bumpTexture;
-                groundMat.bumpTexture.uScale = 10;
-                groundMat.bumpTexture.vScale = 10;
-            }
-            ground.material = groundMat;
-        } else {
-            console.log("Aucun matériau valide dans sand_material.glb");
-            groundMat.diffuseColor = new BABYLON.Color3(0.93, 0.83, 0.68);
-        }
-        loadedMeshes.forEach(mesh => mesh.dispose());
-    }).catch((error) => {
-        console.log("Erreur chargement sand_material.glb :", error);
-        groundMat.diffuseColor = new BABYLON.Color3(0.93, 0.83, 0.68);
-    });
+        pedestal.position = new BABYLON.Vector3(position[0], 0, position[2]);
+        const scaleFactor = 0.3;
+        pedestal.scaling = new BABYLON.Vector3(scaleFactor, scaleFactor, scaleFactor);
 
-    // Chargement de la texture pour les murs de la pyramide
-    BABYLON.SceneLoader.ImportMeshAsync("", "./assets/", "sand_bricks_tile_texture.glb", scene).then((result) => {
-        const loadedMeshes = result.meshes;
-        if (loadedMeshes.length > 0 && loadedMeshes[0].material) {
-            const material = loadedMeshes[0].material;
-            console.log("Matériau pour les murs de la pyramide :", material);
-            console.log("Diffuse Texture :", material.diffuseTexture ? material.diffuseTexture.url : "Aucune");
-            console.log("Bump Texture :", material.bumpTexture ? material.bumpTexture.url : "Aucune");
-
-            if (material.diffuseTexture) {
-                pyramidMat.diffuseTexture = material.diffuseTexture;
-                pyramidMat.diffuseTexture.uScale = 10; // Ajusté pour mieux couvrir les murs
-                pyramidMat.diffuseTexture.vScale = 10; // Ajusté pour mieux couvrir les murs
-            }
-            pyramidMat.diffuseColor = material.diffuseColor || new BABYLON.Color3(1, 1, 1);
-            if (material.bumpTexture) {
-                pyramidMat.bumpTexture = material.bumpTexture;
-                pyramidMat.bumpTexture.uScale = 10; // Ajusté pour mieux couvrir les murs
-                pyramidMat.bumpTexture.vScale = 10; // Ajusté pour mieux couvrir les murs
-            }
-            pyramid.material = pyramidMat;
-        } else {
-            console.log("Aucun matériau valide dans sand_bricks_tile_texture.glb");
-            pyramidMat.diffuseColor = new BABYLON.Color3(0.76, 0.60, 0.42);
-        }
-        loadedMeshes.forEach(mesh => mesh.dispose());
-    }).catch((error) => {
-        console.log("Erreur chargement sand_bricks_tile_texture.glb :", error);
-        pyramidMat.diffuseColor = new BABYLON.Color3(0.76, 0.60, 0.42);
-    });
-
-    // Fonction pour créer les piédestaux
-    function createPedestal(position, height = 2) {
-        var pedestalBase = BABYLON.MeshBuilder.CreateBox("pedestalBase", { width: 2.4, height: height * 0.9, depth: 2.4 }, scene);
-        pedestalBase.position = new BABYLON.Vector3(position[0], height * 0.45, position[2]);
-
-        var pedestalTop = BABYLON.MeshBuilder.CreateBox("pedestalTop", { width: 2.6, height: height * 0.1, depth: 2.6 }, scene);
-        pedestalTop.position = new BABYLON.Vector3(position[0], height, position[2]);
-
-        var pedestalMat = new BABYLON.StandardMaterial("pedestalMat", scene);
+        const pedestalMat = new BABYLON.StandardMaterial("pedestalMat", scene);
         pedestalMat.diffuseColor = new BABYLON.Color3(0.8, 0.65, 0.4);
 
-        var pedestalTexture = new BABYLON.DynamicTexture("pedestalTexture", { width: 512, height: 512 }, scene);
-        var pedCtx = pedestalTexture.getContext();
+        const pedestalTexture = new BABYLON.DynamicTexture("pedestalTexture", { width: 512, height: 512 }, scene);
+        const pedCtx = pedestalTexture.getContext();
         pedCtx.fillStyle = "#D2B96A";
         pedCtx.fillRect(0, 0, 512, 512);
         pedCtx.fillStyle = "#614D3A";
@@ -134,18 +88,20 @@ var createScene = function () {
         pedestalTexture.update();
 
         pedestalMat.diffuseTexture = pedestalTexture;
-        pedestalBase.material = pedestalMat;
-        pedestalTop.material = pedestalMat;
+        pedestalMat.specularColor = new BABYLON.Color3(0, 0, 0);
 
-        var pedestal = BABYLON.Mesh.MergeMeshes([pedestalBase, pedestalTop], true, true, undefined, false, true);
+        result.meshes.forEach(mesh => {
+            mesh.material = pedestalMat;
+        });
+
         pedestal.name = "pedestal";
-        return pedestal;
+        return { pedestal, height: height * scaleFactor };
     }
 
     var positions = [
-        [-24, 3, -18], [-24, 3, 0], [-24, 3, 18],
-        [24, 3, -18], [24, 3, 0], [24, 3, 18],
-        [-18, 3, 24], [0, 3, 24], [18, 3, 24],
+        [24, 3, 18], [24, 3, 0], [24, 3, -18],
+        [-24, 3, 18], [-24, 3, 0], [-24, 3, -18],
+        [18, 3, -24], [0, 3, -24], [-18, 3, -24],
         [0, 3, 0]
     ];
 
@@ -163,94 +119,117 @@ var createScene = function () {
     ];
 
     var artifacts = [];
+    var pedestals = [];
     var assetsManager = new BABYLON.AssetsManager(scene);
 
-    function loadGLBModel(index, position, pedestalHeight) {
-        var pedestal = createPedestal([position[0], 0, position[2]], pedestalHeight);
-        var modelTask = assetsManager.addMeshTask("model" + index, "", "./assets/", "oeuvre" + (index + 1) + ".glb");
-
-        modelTask.onSuccess = function(task) {
-            var model = task.loadedMeshes[0];
-            var scaleFactor;
-            var artifactName = artifactData[index].name;
-            if (["Masque de Toutânkhamon", "Pierre de Rosette", "Statuette d'Anubis", "Vase canope", "Statue de Bastet"].includes(artifactName)) {
-                scaleFactor = 1.5;
-            } else if (artifactName === "Buste de Néfertiti") {
-                scaleFactor = 0.1;
-            } else if (artifactName === "Ankh égyptien") {
-                scaleFactor = 2.5;
-            } else if (["Scarabée sacré", "Tablette hiéroglyphique"].includes(artifactName)) {
-                scaleFactor = 0.01;
-            } else if (artifactName === "Sarcophage miniature") {
-                scaleFactor = 0.009;
-            } else {
-                scaleFactor = 0.05;
-            }
-
-            model.scaling = new BABYLON.Vector3(scaleFactor, scaleFactor, scaleFactor);
-            model.position = new BABYLON.Vector3(position[0], pedestalHeight, position[2]);
-            model.metadata = artifactData[index];
-            model.metadata.initialY = model.position.y;
-            model.metadata.isRotating = false;
-
-            console.log(`Modèle ${index} (${artifactName}):`);
-            console.log(`ScaleFactor appliqué: ${scaleFactor}`);
-            console.log(`Position: ${model.position}`);
-            console.log(`Uses Quaternion: ${model.rotationQuaternion !== null}`);
-
-            artifacts.push(model);
-
-            for (var i = 0; i < task.loadedMeshes.length; i++) {
-                task.loadedMeshes[i].isPickable = true;
-                task.loadedMeshes[i].metadata = artifactData[index];
-            }
-        };
-
-        modelTask.onError = function(task, message, exception) {
-            console.log("Erreur lors du chargement du modèle " + index + ": " + message);
-            var fallbackCube = BABYLON.MeshBuilder.CreateBox("fallbackCube" + index, { width: 0.8, height: 0.8, depth: 0.8 }, scene);
-            fallbackCube.position = new BABYLON.Vector3(position[0], pedestalHeight, position[2]);
-            fallbackCube.metadata = artifactData[index];
-            fallbackCube.metadata.initialY = fallbackCube.position.y;
-            fallbackCube.metadata.isRotating = false;
-            var cubeMat = new BABYLON.StandardMaterial("cubeMat" + index, scene);
-            var colorIndex = index % 5;
-            if (colorIndex === 0) cubeMat.diffuseColor = new BABYLON.Color3(0.85, 0.7, 0.2);
-            else if (colorIndex === 1) cubeMat.diffuseColor = new BABYLON.Color3(0.15, 0.5, 0.7);
-            else if (colorIndex === 2) cubeMat.diffuseColor = new BABYLON.Color3(0.9, 0.88, 0.8);
-            else if (colorIndex === 3) cubeMat.diffuseColor = new BABYLON.Color3(0.65, 0.45, 0.15);
-            else cubeMat.diffuseColor = new BABYLON.Color3(0.6, 0.25, 0.2);
-            fallbackCube.material = cubeMat;
-            fallbackCube.isPickable = true;
-            artifacts.push(fallbackCube);
-        };
+    async function loadPedestals() {
+        for (let i = 0; i < positions.length; i++) {
+            const pos = positions[i];
+            const pedestalHeight = (i === 9) ? 3 : 2;
+            const { pedestal, height } = await createPedestal([pos[0], 0, pos[2]], pedestalHeight);
+            pedestals.push({ pedestal, effectiveHeight: height });
+        }
     }
 
-    positions.forEach((pos, i) => {
-        var pedestalHeight = (i === 9) ? 3 : 2;
-        loadGLBModel(i, pos, pedestalHeight);
-    });
+    async function loadModels() {
+        await loadPedestals();
 
-    assetsManager.load();
+        positions.forEach((pos, i) => {
+            const pedestalHeight = (i === 9) ? 3 : 2;
+            const effectiveHeight = pedestals[i].effectiveHeight;
+            var modelTask = assetsManager.addMeshTask("model" + i, "", "./assets/", "oeuvre" + (i + 1) + ".glb");
+
+            modelTask.onSuccess = function (task) {
+                var model = task.loadedMeshes[0];
+                var scaleFactor;
+                var artifactName = artifactData[i].name;
+                if (["Masque de Toutânkhamon", "Pierre de Rosette", "Statuette d'Anubis", "Vase canope", "Statue de Bastet"].includes(artifactName)) {
+                    scaleFactor = 1.5;
+                } else if (artifactName === "Buste de Néfertiti") {
+                    scaleFactor = 0.1;
+                } else if (artifactName === "Ankh égyptien") {
+                    scaleFactor = 2.5;
+                } else if (["Scarabée sacré", "Tablette hiéroglyphique"].includes(artifactName)) {
+                    scaleFactor = 0.01;
+                } else if (artifactName === "Sarcophage miniature") {
+                    scaleFactor = 0.009;
+                } else {
+                    scaleFactor = 0.05;
+                }
+
+                model.scaling = new BABYLON.Vector3(scaleFactor, scaleFactor, scaleFactor);
+                model.position = new BABYLON.Vector3(pos[0], effectiveHeight, pos[2]);
+                model.metadata = artifactData[i];
+                model.metadata.initialY = model.position.y;
+                model.metadata.isRotating = false;
+
+                artifacts.push(model);
+
+                for (var j = 0; j < task.loadedMeshes.length; j++) {
+                    task.loadedMeshes[j].isPickable = true;
+                    task.loadedMeshes[j].metadata = artifactData[i];
+                }
+            };
+
+            modelTask.onError = function (task, message, exception) {
+                console.log("Erreur lors du chargement du modèle " + i + ": " + message);
+                var fallbackCube = BABYLON.MeshBuilder.CreateBox("fallbackCube" + i, { width: 0.8, height: 0.8, depth: 0.8 }, scene);
+                fallbackCube.position = new BABYLON.Vector3(pos[0], effectiveHeight + 0.4, pos[2]);
+                fallbackCube.metadata = artifactData[i];
+                fallbackCube.metadata.initialY = fallbackCube.position.y;
+                fallbackCube.metadata.isRotating = false;
+                var cubeMat = new BABYLON.StandardMaterial("cubeMat" + i, scene);
+                var colorIndex = i % 5;
+                if (colorIndex === 0) cubeMat.diffuseColor = new BABYLON.Color3(0.85, 0.7, 0.2);
+                else if (colorIndex === 1) cubeMat.diffuseColor = new BABYLON.Color3(0.15, 0.5, 0.7);
+                else if (colorIndex === 2) cubeMat.diffuseColor = new BABYLON.Color3(0.9, 0.88, 0.8);
+                else if (colorIndex === 3) cubeMat.diffuseColor = new BABYLON.Color3(0.65, 0.45, 0.15);
+                else cubeMat.diffuseColor = new BABYLON.Color3(0.6, 0.25, 0.2);
+                fallbackCube.material = cubeMat;
+                fallbackCube.isPickable = true;
+                artifacts.push(fallbackCube);
+            };
+        });
+
+        assetsManager.load();
+    }
+
+    loadModels();
 
     var infoPanel = document.getElementById("info");
     var titleElement = document.getElementById("title");
     var descriptionElement = document.getElementById("description");
     var backButton = document.getElementById("back");
 
-    // Rotation manuelle, ralentie à 30 secondes par tour
+    // Ajouter une catégorie "Contrôles de Vue" dans infoPanel
+    var viewControlsDiv = document.createElement("div");
+    viewControlsDiv.id = "viewControls";
+    viewControlsDiv.className = "control-section"; // Ajouter une classe pour stylisation
+    viewControlsDiv.innerHTML = `
+        <h4>Contrôles de Vue</h4>
+        <div class="button-group">
+            <button id="toggleRotation">Activer/Désactiver Rotation</button>
+            <button id="viewTop">Vue de Haut</button>
+            <button id="viewLeft">Vue de Derrière</button>
+            <button id="viewBack">Vue de Droite</button>
+            <button id="viewRight">Vue de Face</button>
+            <button id="viewFront">Vue de Gauche</button>
+        </div>
+    `;
+    if (infoPanel && backButton) {
+        infoPanel.insertBefore(viewControlsDiv, backButton);
+    }
+
+    var selectedMesh = null;
+
     scene.registerBeforeRender(function () {
         artifacts.forEach(artifact => {
             if (artifact.metadata.isRotating) {
                 if (artifact.rotationQuaternion) {
-                    // Rotation via quaternion
-                    artifact.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(0, 1, 0), artifact.rotationQuaternion.toEulerAngles().y + 0.00349); // ~30s par tour
-                    console.log("Rotation via Quaternion pour", artifact.metadata.name, "Quaternion:", artifact.rotationQuaternion);
+                    artifact.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(0, 1, 0), artifact.rotationQuaternion.toEulerAngles().y + 0.00349);
                 } else {
-                    // Rotation via rotation.y
-                    artifact.rotation.y += 0.00349; // ~30s par tour à 60 FPS (2π / 1800 frames)
+                    artifact.rotation.y += 0.00349;
                     if (artifact.rotation.y >= Math.PI * 2) artifact.rotation.y -= Math.PI * 2;
-                    console.log("Rotation via rotation.y pour", artifact.metadata.name, "Rotation:", artifact.rotation.y);
                 }
             }
         });
@@ -264,12 +243,10 @@ var createScene = function () {
             if (artifact.rotationQuaternion) artifact.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(0, 1, 0), 0);
             artifact.position.y = artifact.metadata.initialY || 0;
             artifact.metadata.isRotating = false;
-            console.log("Réinitialisation de", artifact.metadata.name, "Rotation:", artifact.rotation.y, "Position Y:", artifact.position.y, "Quaternion:", artifact.rotationQuaternion);
         });
     }
 
     function resetView() {
-        console.log("Reset View appelé");
         camera.target = BABYLON.Vector3.Zero();
         BABYLON.Animation.CreateAndStartAnimation(
             "unzoom",
@@ -283,14 +260,13 @@ var createScene = function () {
         );
         infoPanel.style.display = "none";
         resetAllArtifacts();
+        selectedMesh = null;
     }
 
     backButton.addEventListener("click", resetView);
 
     scene.onPointerDown = function (evt, pickResult) {
-        console.log("Clic détecté, pickResult:", pickResult);
         if (pickResult.hit && pickResult.pickedMesh && pickResult.pickedMesh.metadata) {
-            console.log("Objet cliqué:", pickResult.pickedMesh.metadata.name);
             var mesh = pickResult.pickedMesh;
             titleElement.textContent = mesh.metadata.name;
             descriptionElement.textContent = mesh.metadata.desc;
@@ -300,12 +276,9 @@ var createScene = function () {
             while (targetMesh.parent && targetMesh.parent.name) {
                 targetMesh = targetMesh.parent;
             }
-            console.log("TargetMesh:", targetMesh.name, "Initial Rotation:", targetMesh.rotation.y, "Initial Y:", targetMesh.position.y, "Has Quaternion:", targetMesh.rotationQuaternion !== null);
 
-            // Réinitialiser tous les artifacts
             resetAllArtifacts();
 
-            // Animation de bounce
             var bounceAnimation = new BABYLON.Animation(
                 "bounce",
                 "position.y",
@@ -322,13 +295,10 @@ var createScene = function () {
             bounceAnimation.setEasingFunction(new BABYLON.SineEase());
             targetMesh.animations = [bounceAnimation];
             scene.beginAnimation(targetMesh, 0, 120, true);
-            console.log("Animation bounce lancée pour", targetMesh.metadata.name);
 
-            // Activer la rotation manuelle
             targetMesh.metadata.isRotating = true;
-            console.log("Rotation manuelle activée pour", targetMesh.metadata.name);
+            selectedMesh = targetMesh;
 
-            // Zoom de la caméra (réduit)
             camera.target = targetMesh.position.clone();
             BABYLON.Animation.CreateAndStartAnimation(
                 "zoom",
@@ -337,13 +307,76 @@ var createScene = function () {
                 30,
                 60,
                 camera.radius,
-                14, // Zoom réduit
+                14,
                 BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
             );
-        } else {
-            console.log("Aucun objet valide cliqué");
+
+            document.getElementById("toggleRotation").textContent = targetMesh.metadata.isRotating ? "Désactiver Rotation" : "Activer Rotation";
         }
     };
+
+    // Événements des boutons
+    document.getElementById("toggleRotation")?.addEventListener("click", function () {
+        if (selectedMesh && selectedMesh.metadata) {
+            selectedMesh.metadata.isRotating = !selectedMesh.metadata.isRotating;
+            this.textContent = selectedMesh.metadata.isRotating ? "Désactiver Rotation" : "Activer Rotation";
+            if (!selectedMesh.metadata.isRotating) {
+                selectedMesh.rotation.y = 0;
+                if (selectedMesh.rotationQuaternion) {
+                    selectedMesh.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(0, 1, 0), 0);
+                }
+            }
+        }
+    });
+
+    document.getElementById("viewTop")?.addEventListener("click", function () {
+        if (selectedMesh) {
+            camera.target = selectedMesh.position.clone();
+            BABYLON.Animation.CreateAndStartAnimation("viewTop", camera, "alpha", 30, 60, camera.alpha, Math.PI / 2, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            BABYLON.Animation.CreateAndStartAnimation("viewTop", camera, "beta", 30, 60, camera.beta, 0, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            BABYLON.Animation.CreateAndStartAnimation("viewTop", camera, "radius", 30, 60, camera.radius, 10, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+        }
+    });
+
+    document.getElementById("viewLeft")?.addEventListener("click", function () {
+        // Vue de Derrière
+        if (selectedMesh) {
+            camera.target = selectedMesh.position.clone();
+            BABYLON.Animation.CreateAndStartAnimation("viewLeft", camera, "alpha", 30, 60, camera.alpha, Math.PI, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            BABYLON.Animation.CreateAndStartAnimation("viewLeft", camera, "beta", 30, 60, camera.beta, Math.PI / 3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            BABYLON.Animation.CreateAndStartAnimation("viewLeft", camera, "radius", 30, 60, camera.radius, 14, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+        }
+    });
+
+    document.getElementById("viewBack")?.addEventListener("click", function () {
+        // Vue de Droite
+        if (selectedMesh) {
+            camera.target = selectedMesh.position.clone();
+            BABYLON.Animation.CreateAndStartAnimation("viewBack", camera, "alpha", 30, 60, camera.alpha, Math.PI / 2, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            BABYLON.Animation.CreateAndStartAnimation("viewBack", camera, "beta", 30, 60, camera.beta, Math.PI / 3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            BABYLON.Animation.CreateAndStartAnimation("viewBack", camera, "radius", 30, 60, camera.radius, 14, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+        }
+    });
+
+    document.getElementById("viewRight")?.addEventListener("click", function () {
+        // Vue de Face
+        if (selectedMesh) {
+            camera.target = selectedMesh.position.clone();
+            BABYLON.Animation.CreateAndStartAnimation("viewRight", camera, "alpha", 30, 60, camera.alpha, 0, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            BABYLON.Animation.CreateAndStartAnimation("viewRight", camera, "beta", 30, 60, camera.beta, Math.PI / 3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            BABYLON.Animation.CreateAndStartAnimation("viewRight", camera, "radius", 30, 60, camera.radius, 14, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+        }
+    });
+
+    document.getElementById("viewFront")?.addEventListener("click", function () {
+        // Vue de Gauche
+        if (selectedMesh) {
+            camera.target = selectedMesh.position.clone();
+            BABYLON.Animation.CreateAndStartAnimation("viewFront", camera, "alpha", 30, 60, camera.alpha, -Math.PI / 2, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            BABYLON.Animation.CreateAndStartAnimation("viewFront", camera, "beta", 30, 60, camera.beta, Math.PI / 3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            BABYLON.Animation.CreateAndStartAnimation("viewFront", camera, "radius", 30, 60, camera.radius, 14, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+        }
+    });
 
     return scene;
 };
