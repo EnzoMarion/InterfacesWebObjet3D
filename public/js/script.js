@@ -5,8 +5,7 @@ var engine = new BABYLON.Engine(canvas, true);
 var scene, artifacts, camera, minimapCanvas, minimapCtx, tourTimeout, isTourActive = false, interactionPrompt;
 var previousPosition, previousTarget, selectedArtifact = null;
 var isMouseDown = false;
-var previousMouseX = null;
-var previousMouseY = null;
+
 var createScene = function () {
     scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color3(0.96, 0.91, 0.82);
@@ -142,8 +141,23 @@ var createScene = function () {
 
         var pedestal = BABYLON.Mesh.MergeMeshes([pedestalBase, pedestalTop], true, true, undefined, false, true);
         pedestal.name = "pedestal";
-        pedestal.checkCollisions = true;
+        pedestal.checkCollisions = true; // Réactivation des collisions pour les présentoirs
         return pedestal;
+    }
+
+    function createVitrine(position, height) {
+        var vitrine = BABYLON.MeshBuilder.CreateCylinder("vitrine", {
+            height: height + 1, // Hauteur légèrement supérieure au piédestal
+            diameter: 3,       // Diamètre suffisant pour englober l'œuvre
+            tessellation: 32   // Pour une apparence lisse
+        }, scene);
+        vitrine.position = new BABYLON.Vector3(position[0], (height + 1) / 2, position[2]);
+        var vitrineMat = new BABYLON.StandardMaterial("vitrineMat", scene);
+        vitrineMat.diffuseColor = new BABYLON.Color3(0.8, 0.9, 1); // Couleur claire pour simuler le verre
+        vitrineMat.alpha = 0.3; // Transparence pour effet vitrine
+        vitrine.material = vitrineMat;
+        vitrine.checkCollisions = true; // Collisions activées pour empêcher de passer à travers
+        return vitrine;
     }
 
     var positions = [
@@ -170,6 +184,7 @@ var createScene = function () {
 
     function loadGLBModel(index, position, pedestalHeight) {
         var pedestal = createPedestal([position[0], 0, position[2]], pedestalHeight);
+        var vitrine = createVitrine([position[0], 0, position[2]], pedestalHeight); // Ajout de la vitrine
         var modelTask = assetsManager.addMeshTask("model" + index, "", "./assets/", "oeuvre" + (index + 1) + ".glb");
 
         modelTask.onSuccess = function(task) {
@@ -204,7 +219,7 @@ var createScene = function () {
             for (var i = 0; i < task.loadedMeshes.length; i++) {
                 task.loadedMeshes[i].isPickable = true;
                 task.loadedMeshes[i].metadata = artifactData[index];
-                task.loadedMeshes[i].checkCollisions = true;
+                task.loadedMeshes[i].checkCollisions = true; // Collisions réactivées pour les œuvres
             }
         };
 
@@ -272,9 +287,7 @@ var createScene = function () {
         clearTimeout(tourTimeout);
         isTourActive = false;
         selectedArtifact = null;
-        isMouseDown = false;  // Réinitialiser cette variable
-        previousMouseX = null;
-        previousMouseY = null;
+        isMouseDown = false;
         if (previousPosition && previousTarget) {
             camera.position = previousPosition.clone();
             camera.setTarget(previousTarget.clone());
@@ -282,6 +295,7 @@ var createScene = function () {
         infoPanel.style.display = "none";
         highlightArtifactInList(-1);
         document.exitPointerLock();
+        camera._keys = [];
     }
 
     backButton.addEventListener("click", resetView);
@@ -305,21 +319,24 @@ var createScene = function () {
         }
     });
 
-    // Animation fluide de la caméra
     function animateCamera(targetPosition, newPosition) {
-        // Sortir immédiatement du mode pointer lock quand on commence l'animation
         document.exitPointerLock();
-
+        camera._keys = [];
         BABYLON.Animation.CreateAndStartAnimation(
             "camPos",
             camera,
             "position",
-            60, // FPS
-            60, // Frames totales (1 seconde)
+            60,
+            60,
             camera.position,
             newPosition,
             BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
-            new BABYLON.QuadraticEase()
+            new BABYLON.QuadraticEase(),
+            () => {
+                if (selectedArtifact) {
+                    canvas.requestPointerLock();
+                }
+            }
         );
         BABYLON.Animation.CreateAndStartAnimation(
             "camTarget",
@@ -343,7 +360,7 @@ var createScene = function () {
                 var minDistance = Infinity;
                 artifacts.forEach((mesh, index) => {
                     var distance = BABYLON.Vector3.Distance(camera.position, mesh.position);
-                    if (distance < 5 && distance < minDistance) {
+                    if (distance < 10 && distance < minDistance) { // Distance augmentée de 5 à 10
                         nearestArtifact = mesh;
                         minDistance = distance;
                     }
@@ -365,46 +382,17 @@ var createScene = function () {
         }
     });
 
-    canvas.addEventListener("mousedown", function (evt) {
-        if (evt.button === 0) { // Clic gauche
-            if (selectedArtifact) {
-                isMouseDown = true;
-                previousMouseX = evt.clientX;
-                previousMouseY = evt.clientY;
-                evt.preventDefault();
-                console.log("Clic gauche enfoncé sur œuvre, isMouseDown =", isMouseDown);
-            } else {
-                // Mode navigation normale FPS
-                canvas.requestPointerLock = canvas.requestPointerLock || canvas.msRequestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
-                if (canvas.requestPointerLock) {
-                    canvas.requestPointerLock();
-                }
+    document.addEventListener("mousedown", function (evt) {
+        if (evt.button === 0 && !selectedArtifact) {
+            canvas.requestPointerLock = canvas.requestPointerLock || canvas.msRequestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+            if (canvas.requestPointerLock) {
+                canvas.requestPointerLock();
             }
         }
     });
 
-    window.addEventListener("mouseup", function (evt) {
-        if (evt.button === 0 && isMouseDown) {
-            isMouseDown = false;
-            previousMouseX = null;
-            previousMouseY = null;
-            console.log("Clic gauche relâché (global), isMouseDown =", isMouseDown);
-        }
-    });
-
-    canvas.addEventListener("mouseup", function (evt) {
-        if (evt.button === 0) {
-            isMouseDown = false;
-            previousMouseX = null; // Réinitialiser
-            previousMouseY = null;
-            console.log("Clic gauche relâché, isMouseDown =", isMouseDown);
-            document.exitPointerLock(); // Libérer le pointeur si verrouillé
-        }
-    });
-
-    canvas.addEventListener("mousemove", function (evt) {
-        if (!selectedArtifact) { // Mode FPS normal
-            // Le code existant pour la navigation FPS
+    document.addEventListener("mousemove", function (evt) {
+        if (!selectedArtifact) { // Mode FPS
             var sensitivity = 0.002;
             var deltaX = evt.movementX * sensitivity;
             var deltaY = evt.movementY * sensitivity;
@@ -420,45 +408,29 @@ var createScene = function () {
             if (euler.x > Math.PI / 2) euler.x = Math.PI / 2;
             if (euler.x < -Math.PI / 2) euler.x = -Math.PI / 2;
             camera.rotationQuaternion = BABYLON.Quaternion.FromEulerAngles(euler.x, euler.y, euler.z);
-        } else if (selectedArtifact && isMouseDown) { // Mode rotation autour de l'œuvre
-            var deltaX = 0;
-            var deltaY = 0;
+        } else if (selectedArtifact) { // Mode rotation autour de l'œuvre sans clic
+            var sensitivity = 0.005;
+            var deltaX = evt.movementX * sensitivity;
+            var deltaY = evt.movementY * sensitivity;
+            console.log("Mouvement souris, deltaX =", deltaX, "deltaY =", deltaY);
 
-            // Calcul du déplacement de la souris
-            if (previousMouseX !== null && previousMouseY !== null) {
-                deltaX = (evt.clientX - previousMouseX) * 0.01;
-                deltaY = (evt.clientY - previousMouseY) * 0.01;
-                previousMouseX = evt.clientX;
-                previousMouseY = evt.clientY;
-            }
+            var distance = BABYLON.Vector3.Distance(camera.position, selectedArtifact.position);
+            var direction = camera.position.subtract(selectedArtifact.position).normalize();
 
-            // Calculer la position actuelle par rapport à l'œuvre
-            var direction = camera.position.subtract(selectedArtifact.position);
-            var distance = direction.length();
-            direction.normalize();
-
-            // Créer une matrice de rotation pour le mouvement horizontal (autour de l'axe Y)
             var rotationMatrixY = BABYLON.Matrix.RotationY(-deltaX);
+            direction = BABYLON.Vector3.TransformCoordinates(direction, rotationMatrixY);
 
-            // Calculer l'axe de rotation pour le mouvement vertical
             var right = BABYLON.Vector3.Cross(direction, BABYLON.Vector3.Up()).normalize();
             var rotationMatrixX = BABYLON.Matrix.RotationAxis(right, deltaY);
+            direction = BABYLON.Vector3.TransformCoordinates(direction, rotationMatrixX);
 
-            // Appliquer les rotations
-            var newDirection = BABYLON.Vector3.TransformCoordinates(direction, rotationMatrixY);
-            newDirection = BABYLON.Vector3.TransformCoordinates(newDirection, rotationMatrixX);
+            if (direction.y < -0.9) direction.y = -0.9;
+            if (direction.y > 0.9) direction.y = 0.9;
 
-            // Limiter l'angle vertical
-            var angle = Math.acos(BABYLON.Vector3.Dot(newDirection, BABYLON.Vector3.Up()));
-            if (angle < 0.1 || angle > Math.PI - 0.1) {
-                // Trop près des pôles, ignorer la rotation verticale
-                newDirection = BABYLON.Vector3.TransformCoordinates(direction, rotationMatrixY);
-            }
-
-            // Calculer la nouvelle position de la caméra
-            var newPosition = selectedArtifact.position.add(newDirection.scale(distance));
-            camera.position = newPosition;
+            camera.position = selectedArtifact.position.add(direction.scale(distance));
             camera.setTarget(selectedArtifact.position);
+
+            console.log("Nouvelle position caméra :", camera.position);
         }
     });
 
@@ -508,9 +480,11 @@ var createScene = function () {
     });
 
     window.addEventListener("keyup", function (evt) {
-        var index = camera._keys.indexOf(evt.keyCode);
-        if (index > -1) {
-            camera._keys.splice(index, 1);
+        if (!selectedArtifact) {
+            var index = camera._keys.indexOf(evt.keyCode);
+            if (index > -1) {
+                camera._keys.splice(index, 1);
+            }
         }
     });
 
@@ -587,16 +561,37 @@ var modal = document.getElementById("welcomeModal");
 var closeModalBtn = document.getElementById("closeModal");
 var museumTitle = document.getElementById("museumTitle");
 
+if (!modal) console.error("L'élément #welcomeModal n'existe pas dans le HTML");
+if (!closeModalBtn) console.error("L'élément #closeModal n'existe pas dans le HTML");
+if (!museumTitle) console.error("L'élément #museumTitle n'existe pas dans le HTML");
+
 window.onload = function() {
-    modal.style.display = "flex";
+    if (modal) {
+        modal.style.display = "flex";
+    }
 };
 
-closeModalBtn.addEventListener("click", function() {
-    modal.style.display = "none";
-});
+if (closeModalBtn) {
+    closeModalBtn.addEventListener("click", function() {
+        console.log("Bouton de fermeture cliqué");
+        if (modal) {
+            modal.style.display = "none";
+        }
+    });
+}
 
-museumTitle.addEventListener("click", function() {
-    modal.style.display = "flex";
+if (museumTitle) {
+    museumTitle.addEventListener("click", function() {
+        if (modal) {
+            modal.style.display = "flex";
+        }
+    });
+}
+
+window.addEventListener("keydown", function(evt) {
+    if (evt.key === "Escape" && modal && modal.style.display === "flex") {
+        modal.style.display = "none";
+    }
 });
 
 engine.runRenderLoop(function () {
@@ -614,7 +609,7 @@ engine.runRenderLoop(function () {
     if (!selectedArtifact) {
         artifacts.forEach((mesh) => {
             var distance = BABYLON.Vector3.Distance(camera.position, mesh.position);
-            if (distance < 5) {
+            if (distance < 10) { // Distance augmentée pour le prompt aussi
                 showPrompt = true;
             }
         });
