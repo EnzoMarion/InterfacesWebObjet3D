@@ -252,13 +252,13 @@ var createScene = function () {
                 case "Table d'offrande par Defdji":
                     scaleFactor = 0.1;
                     offsetX = 0;
-                    offsetY = 3;
+                    offsetY = 2.78;
                     offsetZ = 0;
                     break;
                 case "Buste ptolémaïque":
                     scaleFactor = 1.5;
                     offsetX = 0;
-                    offsetY = 3.088;
+                    offsetY = 2.788;
                     offsetZ = 0;
                     break;
                 case "Ancien relief égyptien avec hiéroglyphes":
@@ -288,7 +288,7 @@ var createScene = function () {
                 case "Ramsès II Egyptian statue":
                     scaleFactor = 1.5;
                     offsetX = 0;
-                    offsetY = 2.5;
+                    offsetY = 2;
                     offsetZ = 0;
                     break;
                 default:
@@ -352,6 +352,12 @@ var createScene = function () {
     var artifactList = document.getElementById("artifactItems");
     minimapCanvas = document.getElementById("minimap");
     minimapCtx = minimapCanvas.getContext("2d");
+
+    var viewTopButton = document.getElementById("viewTop");
+    var viewLeftButton = document.getElementById("viewLeft");
+    var viewBackButton = document.getElementById("viewBack");
+    var viewRightButton = document.getElementById("viewRight");
+    var viewFrontButton = document.getElementById("viewFront");
 
     artifactData.forEach((artifact, index) => {
         var li = document.createElement("li");
@@ -446,6 +452,22 @@ var createScene = function () {
         );
     }
 
+    function moveCameraAroundArtifact(angleY, angleX, distance = 5) {
+        if (selectedArtifact) {
+            var artifactPos = selectedArtifact.position;
+            var newPosX = artifactPos.x + distance * Math.sin(angleY) * Math.cos(angleX);
+            var newPosZ = artifactPos.z + distance * Math.cos(angleY) * Math.cos(angleX);
+            var newPosY = artifactPos.y + distance * Math.sin(angleX);
+            animateCamera(artifactPos, new BABYLON.Vector3(newPosX, newPosY, newPosZ));
+        }
+    }
+
+    viewTopButton.addEventListener("click", () => moveCameraAroundArtifact(0, Math.PI / 2, 8));
+    viewLeftButton.addEventListener("click", () => moveCameraAroundArtifact(Math.PI / 2, 0, 8));
+    viewBackButton.addEventListener("click", () => moveCameraAroundArtifact(Math.PI, 0, 8));
+    viewRightButton.addEventListener("click", () => moveCameraAroundArtifact(-Math.PI / 2, 0, 8));
+    viewFrontButton.addEventListener("click", () => moveCameraAroundArtifact(0, 0, 8));
+
     window.addEventListener("keydown", function (evt) {
         evt.preventDefault();
         if (evt.key === "Escape" && modal && modal.style.display === "flex") {
@@ -487,10 +509,19 @@ var createScene = function () {
     });
 
     document.addEventListener("mousedown", function (evt) {
-        if (evt.button === 0 && !selectedArtifact && (!modal || modal.style.display === "none")) {
-            canvas.requestPointerLock();
-            canvas.style.cursor = "none";
-            document.getElementById("crosshair").style.display = "block";
+        if (evt.button === 0) {
+            if (!selectedArtifact && (!modal || modal.style.display === "none")) {
+                canvas.requestPointerLock();
+                canvas.style.cursor = "none";
+                document.getElementById("crosshair").style.display = "block";
+            }
+            isMouseDown = true;
+        }
+    });
+
+    document.addEventListener("mouseup", function (evt) {
+        if (evt.button === 0) {
+            isMouseDown = false;
         }
     });
 
@@ -521,7 +552,7 @@ var createScene = function () {
             if (euler.x > Math.PI / 2) euler.x = Math.PI / 2;
             if (euler.x < -Math.PI / 2) euler.x = -Math.PI / 2;
             camera.rotationQuaternion = BABYLON.Quaternion.FromEulerAngles(euler.x, euler.y, euler.z);
-        } else if (selectedArtifact) {
+        } else if (selectedArtifact && isMouseDown) {
             var sensitivity = 0.005;
             var deltaX = evt.movementX * sensitivity;
             var deltaY = evt.movementY * sensitivity;

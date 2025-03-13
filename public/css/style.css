@@ -146,6 +146,13 @@ header h1:hover {
   padding-bottom: 5px;
 }
 
+#camera h3 {
+  font-size: 1.3em;
+  color: #1F140F;
+  border-bottom: 2px solid #C0972F;
+  padding-bottom: 5px;
+}
+
 #artifactItems {
   list-style: none;
   padding: 0;
