@@ -220,59 +220,80 @@ var createScene = function () {
 
         modelTask.onSuccess = function(task) {
             var model = task.loadedMeshes[0];
-            var scaleFactor, offsetY;
+            var scaleFactor, offsetX, offsetY, offsetZ;
             var artifactName = artifactData[index].name;
 
-            // Ajustement des échelles et décalages verticaux pour poser les artefacts sur le présentoir
             switch (artifactName) {
                 case "Statue de Bastet déesse":
                     scaleFactor = 0.02;
+                    offsetX = -0.8;
                     offsetY = -0.3;
+                    offsetZ = 0.6;
                     break;
                 case "Pyramidion de Ptahemwia":
                     scaleFactor = 1.0;
+                    offsetX = 0;
                     offsetY = 0.1;
+                    offsetZ = 0;
                     break;
                 case "Statue de Raia et Ptah":
-                    scaleFactor = 1.2;
-                    offsetY = -0.5;
+                    scaleFactor = 1.8;
+                    offsetX = -1.6;
+                    offsetY = 1.05;
+                    offsetZ = 0.8;
                     break;
                 case "Table d'offrande par Defdji":
-                    scaleFactor = 0.15;
+                    scaleFactor = 0.1;
+                    offsetX = 0;
                     offsetY = 0;
+                    offsetZ = 0;
                     break;
                 case "Buste ptolémaïque":
                     scaleFactor = 1.5;
-                    offsetY = 0.2;
+                    offsetX = 0;
+                    offsetY = 0.088;
+                    offsetZ = 0;
                     break;
                 case "Ancien relief égyptien avec hiéroglyphes":
                     scaleFactor = 0.015;
-                    offsetY = 0;
+                    offsetX = 0;
+                    offsetY = 0.088;
+                    offsetZ = 0;
                     break;
                 case "La fuite en Égypte":
                     scaleFactor = 6.0;
+                    offsetX = 0;
                     offsetY = 0.1;
+                    offsetZ = 0;
                     break;
                 case "Maquette de bateau d'Égypte":
                     scaleFactor = 0.005;
+                    offsetX = 0;
                     offsetY = 0;
+                    offsetZ = 0;
                     break;
                 case "Statue de Neith déesse":
-                    scaleFactor = 0.09;
+                    scaleFactor = 0.02;
+                    offsetX = 0;
                     offsetY = 1.0;
+                    offsetZ = 0;
                     break;
                 case "Ramsès II Egyptian statue":
                     scaleFactor = 1.5;
-                    offsetY = 0;
+                    offsetX = 0;
+                    offsetY = -0.5;
+                    offsetZ = 0;
                     break;
                 default:
                     scaleFactor = 0.05;
+                    offsetX = 0;
                     offsetY = 0;
+                    offsetZ = 0;
             }
 
             model.scaling = new BABYLON.Vector3(scaleFactor, scaleFactor, scaleFactor);
-            // Position avec décalage vertical ajusté
-            model.position = new BABYLON.Vector3(position[0], pedestalHeight + offsetY, position[2]);
+            // Position avec décalages vertical et horizontal ajustés
+            model.position = new BABYLON.Vector3(position[0] + offsetX, pedestalHeight + offsetY, position[2] + offsetZ);
             model.metadata = artifactData[index];
             artifacts[index] = model;
 
@@ -300,7 +321,6 @@ var createScene = function () {
             fallbackCube.checkCollisions = false;
         };
     }
-
     artifacts = new Array(positions.length);
     positions.forEach((pos, i) => {
         var pedestalHeight = (i === 9) ? 3 : 2;
