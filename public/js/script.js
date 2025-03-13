@@ -12,62 +12,110 @@ var createScene = function () {
     camera.wheelPrecision = 10;
 
     var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-    light.intensity = 0.7;
-    light.diffuse = new BABYLON.Color3(1, 0.98, 0.8);
+    light.intensity = 0.9; // Augmenté pour plus de luminosité
+    light.diffuse = new BABYLON.Color3(1, 1, 0.95); // Teinte plus neutre
 
     var dirLight = new BABYLON.DirectionalLight("dirLight", new BABYLON.Vector3(-1, -2, -1), scene);
-    dirLight.intensity = 0.5;
-    dirLight.diffuse = new BABYLON.Color3(1, 0.95, 0.8);
+    dirLight.intensity = 0.7; // Augmenté pour plus de luminosité
+    dirLight.diffuse = new BABYLON.Color3(1, 1, 0.95); // Teinte plus neutre
 
-    // Création du sol avec plus de subdivisions et crevasses
-    var ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 60, height: 60, subdivisions: 150 }, scene);
+    // Ground creation with improved terrain effect (texture intacte)
+    var ground = BABYLON.MeshBuilder.CreateGround("ground", {
+        width: 60,
+        height: 60,
+        subdivisions: 200
+    }, scene);
+
     var groundMat = new BABYLON.StandardMaterial("groundMat", scene);
-    groundMat.diffuseColor = new BABYLON.Color3(0.93, 0.83, 0.68); // Couleur par défaut si la texture échoue
+    groundMat.diffuseColor = new BABYLON.Color3(0.95, 0.95, 0.90); // Plus clair, moins jaune
     groundMat.diffuseTexture = new BABYLON.Texture("./assets/sand_diffuse.jpg", scene);
-    groundMat.diffuseTexture.uScale = 10;
-    groundMat.diffuseTexture.vScale = 10;
+    groundMat.diffuseTexture.uScale = 15;
+    groundMat.diffuseTexture.vScale = 15;
+
     groundMat.bumpTexture = new BABYLON.Texture("./assets/sand_normal.jpg", scene);
-    groundMat.bumpTexture.uScale = 10;
-    groundMat.bumpTexture.vScale = 10;
-    groundMat.displacementMap = new BABYLON.Texture("./assets/sand_displacement.svg", scene);
-    groundMat.displacementMap.uScale = 10;
-    groundMat.displacementMap.vScale = 10;
-    groundMat.displacementMapLevel = 2; // Plus de crevasses
-    groundMat.specularColor = new BABYLON.Color3(0, 0, 0);
-    groundMat.specularPower = 0;
+    groundMat.bumpTexture.uScale = 20;
+    groundMat.bumpTexture.vScale = 20;
+    groundMat.bumpTexture.level = 1.2;
+
+    groundMat.displacementMap = new BABYLON.Texture("./assets/sand_displacement.jpg", scene);
+    groundMat.displacementMap.uScale = 15;
+    groundMat.displacementMap.vScale = 15;
+    groundMat.displacementMapLevel = 4;
+
+    var vertexData = BABYLON.VertexData.CreateGround({
+        width: 60,
+        height: 60,
+        subdivisions: 200
+    });
+    var positions = vertexData.positions;
+    for (var i = 0; i < positions.length; i += 3) {
+        if (Math.abs(positions[i]) < 29 && Math.abs(positions[i + 2]) < 29) {
+            var distanceFromCenter = Math.sqrt(positions[i] * positions[i] + positions[i + 2] * positions[i + 2]);
+            var randomFactor = (Math.random() - 0.5) * 0.6;
+            var adjustedHeight = randomFactor * (1 - distanceFromCenter / 30);
+            positions[i + 1] = adjustedHeight;
+        }
+    }
+    vertexData.applyToMesh(ground);
+
+    groundMat.specularColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+    groundMat.specularPower = 64;
+    groundMat.useParallax = true;
+    groundMat.parallaxScaleBias = 0.15;
+    groundMat.useParallaxOcclusion = true;
+
     ground.material = groundMat;
 
-    // Création de la pyramide
+    // Pyramid creation with brick wall texture and custom UVs
     var pyramidHeight = 45;
     var pyramidBaseWidth = 60;
     var pyramid = BABYLON.MeshBuilder.CreatePolyhedron("pyramid", {
         custom: {
-            "vertex": [
-                [-pyramidBaseWidth / 2, 0, -pyramidBaseWidth / 2],
-                [pyramidBaseWidth / 2, 0, -pyramidBaseWidth / 2],
-                [pyramidBaseWidth / 2, 0, pyramidBaseWidth / 2],
-                [-pyramidBaseWidth / 2, 0, pyramidBaseWidth / 2],
-                [0, pyramidHeight, 0]
+            vertex: [
+                [-pyramidBaseWidth / 2, 0, -pyramidBaseWidth / 2], // 0
+                [pyramidBaseWidth / 2, 0, -pyramidBaseWidth / 2],  // 1
+                [pyramidBaseWidth / 2, 0, pyramidBaseWidth / 2],   // 2
+                [-pyramidBaseWidth / 2, 0, pyramidBaseWidth / 2],  // 3
+                [0, pyramidHeight, 0]                              // 4 (sommet)
             ],
-            "face": [
-                [0, 1, 4],
-                [1, 2, 4],
-                [2, 3, 4],
-                [3, 0, 4]
+            face: [
+                [0, 1, 4], // Face 1
+                [1, 2, 4], // Face 2
+                [2, 3, 4], // Face 3
+                [3, 0, 4]  // Face 4
+            ],
+            // Coordonnées UV personnalisées pour chaque face triangulaire
+            uv: [
+                [0, 0], [1, 0], [0.5, 1], // Face 0,1,4 (bas gauche, bas droit, sommet)
+                [0, 0], [1, 0], [0.5, 1], // Face 1,2,4
+                [0, 0], [1, 0], [0.5, 1], // Face 2,3,4
+                [0, 0], [1, 0], [0.5, 1]  // Face 3,0,4
             ]
         },
         sideOrientation: BABYLON.Mesh.DOUBLESIDE
     }, scene);
 
     var pyramidMat = new BABYLON.StandardMaterial("pyramidMat", scene);
-    pyramidMat.diffuseColor = new BABYLON.Color3(1, 1, 1); // Couleur blanche par défaut
+    pyramidMat.diffuseTexture = new BABYLON.Texture("./assets/wall_diffuse.jpg", scene); // Texture diffuse des briques
+    pyramidMat.diffuseTexture.uScale = 1; // Ajustez l'échelle si besoin
+    pyramidMat.diffuseTexture.vScale = 1;
+
+    pyramidMat.bumpTexture = new BABYLON.Texture("./assets/wall_normal.jpg", scene); // Texture normale des briques
+    pyramidMat.bumpTexture.uScale = 1;
+    pyramidMat.bumpTexture.vScale = 1;
+    pyramidMat.bumpTexture.level = 1.0; // Ajustez l'intensité du normal map
+
+    pyramidMat.displacementMap = new BABYLON.Texture("./assets/wall_displacement.jpg", scene); // Texture de displacement
+    pyramidMat.displacementMap.uScale = 1;
+    pyramidMat.displacementMap.vScale = 1;
+    pyramidMat.displacementMapLevel = 2.0; // Ajustez l'intensité du displacement
+
     pyramid.material = pyramidMat;
 
-    // Fonction pour créer les piédestaux à partir du fichier pedestal.glb
+    // Pedestal creation function
     async function createPedestal(position, height = 2) {
         const result = await BABYLON.SceneLoader.ImportMeshAsync("", "./assets/", "pedestal.glb", scene);
         const pedestal = result.meshes[0];
-
         pedestal.position = new BABYLON.Vector3(position[0], 0, position[2]);
         const scaleFactor = 0.3;
         pedestal.scaling = new BABYLON.Vector3(scaleFactor, scaleFactor, scaleFactor);
@@ -92,6 +140,7 @@ var createScene = function () {
 
         result.meshes.forEach(mesh => {
             mesh.material = pedestalMat;
+            mesh.isPickable = false;
         });
 
         pedestal.name = "pedestal";
@@ -159,16 +208,25 @@ var createScene = function () {
 
                 model.scaling = new BABYLON.Vector3(scaleFactor, scaleFactor, scaleFactor);
                 model.position = new BABYLON.Vector3(pos[0], effectiveHeight, pos[2]);
+                model.rotation = new BABYLON.Vector3(0, 0, 0);
+
                 model.metadata = artifactData[i];
                 model.metadata.initialY = model.position.y;
                 model.metadata.isRotating = false;
 
+                var hitbox = BABYLON.MeshBuilder.CreateBox("hitbox" + i, { size: 1.5 }, scene);
+                hitbox.position = model.position.clone();
+                hitbox.isVisible = false;
+                hitbox.isPickable = true;
+                hitbox.metadata = artifactData[i];
+                hitbox.parent = model;
+
                 artifacts.push(model);
 
-                for (var j = 0; j < task.loadedMeshes.length; j++) {
-                    task.loadedMeshes[j].isPickable = true;
-                    task.loadedMeshes[j].metadata = artifactData[i];
-                }
+                task.loadedMeshes.forEach(mesh => {
+                    mesh.isPickable = true;
+                    mesh.metadata = artifactData[i];
+                });
             };
 
             modelTask.onError = function (task, message, exception) {
@@ -194,53 +252,42 @@ var createScene = function () {
         assetsManager.load();
     }
 
-    loadModels();
+    loadModels().then(() => {
+        resetAllArtifacts();
+    });
 
     var infoPanel = document.getElementById("info");
     var titleElement = document.getElementById("title");
     var descriptionElement = document.getElementById("description");
     var backButton = document.getElementById("back");
 
-    // Ajouter une catégorie "Contrôles de Vue" dans infoPanel
-    var viewControlsDiv = document.createElement("div");
-    viewControlsDiv.id = "viewControls";
-    viewControlsDiv.className = "control-section"; // Ajouter une classe pour stylisation
+    var viewControlsDiv = document.getElementById("viewControls");
     viewControlsDiv.innerHTML = `
         <h4>Contrôles de Vue</h4>
         <div class="button-group">
             <button id="toggleRotation">Activer/Désactiver Rotation</button>
             <button id="viewTop">Vue de Haut</button>
-            <button id="viewLeft">Vue de Derrière</button>
-            <button id="viewBack">Vue de Droite</button>
-            <button id="viewRight">Vue de Face</button>
-            <button id="viewFront">Vue de Gauche</button>
+            <button id="viewLeft">Vue de Droite</button>
+            <button id="viewBack">Vue de Face</button>
+            <button id="viewRight">Vue de Gauche</button>
+            <button id="viewFront">Vue de Derrière</button>
         </div>
     `;
-    if (infoPanel && backButton) {
-        infoPanel.insertBefore(viewControlsDiv, backButton);
-    }
 
     var selectedMesh = null;
 
     scene.registerBeforeRender(function () {
-        artifacts.forEach(artifact => {
-            if (artifact.metadata.isRotating) {
-                if (artifact.rotationQuaternion) {
-                    artifact.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(0, 1, 0), artifact.rotationQuaternion.toEulerAngles().y + 0.00349);
-                } else {
-                    artifact.rotation.y += 0.00349;
-                    if (artifact.rotation.y >= Math.PI * 2) artifact.rotation.y -= Math.PI * 2;
-                }
-            }
-        });
+        if (selectedMesh && selectedMesh.metadata && selectedMesh.metadata.isRotating) {
+            selectedMesh.rotation.y += 0.00349;
+            if (selectedMesh.rotation.y >= Math.PI * 2) selectedMesh.rotation.y -= Math.PI * 2;
+        }
     });
 
     function resetAllArtifacts() {
         artifacts.forEach(artifact => {
             scene.stopAnimation(artifact);
             artifact.animations = [];
-            artifact.rotation.y = 0;
-            if (artifact.rotationQuaternion) artifact.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(0, 1, 0), 0);
+            artifact.rotation = new BABYLON.Vector3(0, 0, 0);
             artifact.position.y = artifact.metadata.initialY || 0;
             artifact.metadata.isRotating = false;
         });
@@ -315,16 +362,12 @@ var createScene = function () {
         }
     };
 
-    // Événements des boutons
     document.getElementById("toggleRotation")?.addEventListener("click", function () {
         if (selectedMesh && selectedMesh.metadata) {
             selectedMesh.metadata.isRotating = !selectedMesh.metadata.isRotating;
             this.textContent = selectedMesh.metadata.isRotating ? "Désactiver Rotation" : "Activer Rotation";
             if (!selectedMesh.metadata.isRotating) {
-                selectedMesh.rotation.y = 0;
-                if (selectedMesh.rotationQuaternion) {
-                    selectedMesh.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(0, 1, 0), 0);
-                }
+                selectedMesh.rotation = new BABYLON.Vector3(0, 0, 0);
             }
         }
     });
@@ -339,7 +382,6 @@ var createScene = function () {
     });
 
     document.getElementById("viewLeft")?.addEventListener("click", function () {
-        // Vue de Derrière
         if (selectedMesh) {
             camera.target = selectedMesh.position.clone();
             BABYLON.Animation.CreateAndStartAnimation("viewLeft", camera, "alpha", 30, 60, camera.alpha, Math.PI, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
@@ -349,7 +391,6 @@ var createScene = function () {
     });
 
     document.getElementById("viewBack")?.addEventListener("click", function () {
-        // Vue de Droite
         if (selectedMesh) {
             camera.target = selectedMesh.position.clone();
             BABYLON.Animation.CreateAndStartAnimation("viewBack", camera, "alpha", 30, 60, camera.alpha, Math.PI / 2, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
@@ -359,7 +400,6 @@ var createScene = function () {
     });
 
     document.getElementById("viewRight")?.addEventListener("click", function () {
-        // Vue de Face
         if (selectedMesh) {
             camera.target = selectedMesh.position.clone();
             BABYLON.Animation.CreateAndStartAnimation("viewRight", camera, "alpha", 30, 60, camera.alpha, 0, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
@@ -369,7 +409,6 @@ var createScene = function () {
     });
 
     document.getElementById("viewFront")?.addEventListener("click", function () {
-        // Vue de Gauche
         if (selectedMesh) {
             camera.target = selectedMesh.position.clone();
             BABYLON.Animation.CreateAndStartAnimation("viewFront", camera, "alpha", 30, 60, camera.alpha, -Math.PI / 2, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);

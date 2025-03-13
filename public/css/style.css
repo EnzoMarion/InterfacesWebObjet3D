@@ -53,6 +53,7 @@ header h1 {
   color: #3A291B;
   box-shadow: -3px 0 15px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(3px);
+  overflow-y: auto; /* Ajouté pour gérer le défilement si le contenu dépasse */
 }
 
 #info h2 {
@@ -70,21 +71,64 @@ header h1 {
   font-size: 1.1em;
 }
 
-#info button {
-  padding: 8px 15px;
+/* Style pour la section "Contrôles de Vue" */
+.control-section {
+  margin-top: 20px;
+}
+
+.control-section h4 {
+  margin: 0 0 10px;
+  font-size: 1.2em;
+  color: #1F140F;
+  border-bottom: 1px solid #C0972F;
+  padding-bottom: 5px;
+}
+
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px; /* Espacement entre les boutons */
+}
+
+.control-section button {
+  padding: 8px 12px;
   background: #C0972F;
   color: #1F140F;
   border: 2px solid #8B4513;
   cursor: pointer;
   font-family: inherit;
-  font-size: 1em;
+  font-size: 0.9em;
   border-radius: 3px;
   transition: all 0.3s ease;
-  margin-top: 10px;
   letter-spacing: 1px;
 }
 
-#info button:hover {
+.control-section button:hover {
+  background: #D4AA3A;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Style pour la section "Retour" */
+.back-section {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.back-section button {
+  padding: 10px 20px;
+  background: #C0972F;
+  color: #1F140F;
+  border: 2px solid #8B4513;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1.1em;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+}
+
+.back-section button:hover {
   background: #D4AA3A;
   transform: translateY(-2px);
   box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
