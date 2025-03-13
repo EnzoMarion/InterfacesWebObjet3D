@@ -179,19 +179,17 @@ var createScene = function () {
         return pedestal;
     }
 
-    function createVitrine(position, height) {
-        var vitrine = BABYLON.MeshBuilder.CreateCylinder("vitrine", {
-            height: height + 1,
-            diameter: 3,
+    function createCollisionZone(position, height) {
+        // Zone de collision invisible plus large autour de chaque artefact
+        var collisionZone = BABYLON.MeshBuilder.CreateCylinder("collisionZone", {
+            height: height + 2, // Plus haut que la vitrine pour englober l'artefact
+            diameter: 5, // Plus large que la vitrine pour éviter les collisions trop proches
             tessellation: 32
         }, scene);
-        vitrine.position = new BABYLON.Vector3(position[0], (height + 1) / 2, position[2]);
-        var vitrineMat = new BABYLON.StandardMaterial("vitrineMat", scene);
-        vitrineMat.diffuseColor = new BABYLON.Color3(0.8, 0.9, 1);
-        vitrineMat.alpha = 0.3;
-        vitrine.material = vitrineMat;
-        vitrine.checkCollisions = true;
-        return vitrine;
+        collisionZone.position = new BABYLON.Vector3(position[0], (height + 2) / 2, position[2]);
+        collisionZone.isVisible = false; // Invisible
+        collisionZone.checkCollisions = true; // Activer les collisions
+        return collisionZone;
     }
 
     var positions = [
@@ -218,7 +216,7 @@ var createScene = function () {
 
     function loadGLBModel(index, position, pedestalHeight) {
         var pedestal = createPedestal([position[0], 0, position[2]], pedestalHeight);
-        var vitrine = createVitrine([position[0], 0, position[2]], pedestalHeight);
+        var collisionZone = createCollisionZone([position[0], 0, position[2]], pedestalHeight); // Ajout de la zone de collision
         var modelTask = assetsManager.addMeshTask("model" + index, "", "./assets/", "oeuvre" + (index + 1) + ".glb");
 
         modelTask.onSuccess = function(task) {
@@ -251,7 +249,8 @@ var createScene = function () {
             for (var i = 0; i < task.loadedMeshes.length; i++) {
                 task.loadedMeshes[i].isPickable = true;
                 task.loadedMeshes[i].metadata = artifactData[index];
-                task.loadedMeshes[i].checkCollisions = true;
+                // Désactiver les collisions directes sur le modèle pour utiliser la zone invisible
+                task.loadedMeshes[i].checkCollisions = false;
             }
         };
 
@@ -269,7 +268,8 @@ var createScene = function () {
             fallbackCube.material = cubeMat;
             fallbackCube.metadata = artifactData[index];
             artifacts[index] = fallbackCube;
-            fallbackCube.checkCollisions = true;
+            // Désactiver les collisions directes sur le cube de secours
+            fallbackCube.checkCollisions = false;
         };
     }
 
@@ -285,7 +285,6 @@ var createScene = function () {
         artifacts.forEach((artifact, idx) => {
             console.log(`Index ${idx}: ${artifact.metadata.name}`);
         });
-        // Modal reste ouverte jusqu'à ce que "Commencer l'exploration" soit cliqué
     };
 
     var infoPanel = document.getElementById("info");
@@ -391,9 +390,8 @@ var createScene = function () {
         );
     }
 
-    // Gestion unifiée des touches
     window.addEventListener("keydown", function (evt) {
-        evt.preventDefault(); // Empêche les comportements par défaut du navigateur
+        evt.preventDefault();
         if (evt.key === "Escape" && modal && modal.style.display === "flex") {
             modal.style.display = "none";
         } else if (evt.keyCode === 69) { // Touche "E"
@@ -432,7 +430,6 @@ var createScene = function () {
         }
     });
 
-    // Modifier l'événement mousedown pour ne pas interférer avec la modal
     document.addEventListener("mousedown", function (evt) {
         if (evt.button === 0 && !selectedArtifact && (!modal || modal.style.display === "none")) {
             canvas.requestPointerLock();
@@ -569,25 +566,25 @@ function updateMinimap() {
 scene = createScene();
 
 var modal = document.getElementById("welcomeModal");
-var startButton = document.getElementById("startExploration"); // Nouveau ID pour "Commencer l'exploration"
+var startButton = document.getElementById("startExploration");
 var museumTitle = document.getElementById("museumTitle");
 
 window.onload = function() {
-    if (modal) modal.style.display = "flex"; // Modal ouverte au chargement
+    if (modal) modal.style.display = "flex";
 };
 
 if (startButton) {
     startButton.addEventListener("click", function(evt) {
-        evt.stopPropagation(); // Empêche la propagation au canvas
+        evt.stopPropagation();
         if (modal) {
-            modal.style.display = "none"; // Ferme la modal
+            modal.style.display = "none";
         }
     });
 }
 
 if (museumTitle) {
     museumTitle.addEventListener("click", function() {
-        if (modal) modal.style.display = "flex"; // Réouvre la modal
+        if (modal) modal.style.display = "flex";
     });
 }
 
