@@ -18,6 +18,7 @@ var createScene = function () {
     camera.ellipsoid = new BABYLON.Vector3(1, 2, 1);
     camera._keys = [];
 
+    // Touches AZERTY (ZQSD)
     camera.keysUp = [90, 38];
     camera.keysDown = [83, 40];
     camera.keysLeft = [81, 37];
@@ -27,9 +28,8 @@ var createScene = function () {
     scene.collisionsEnabled = true;
 
     camera.jumpSpeed = 3;
-    camera._localDirection = new BABYLON.Vector3(0, 0, 0);
-    camera._transformedDirection = new BABYLON.Vector3(0, 0, 0);
 
+    // Saut avec la barre espace
     window.addEventListener("keydown", function (evt) {
         if (evt.keyCode === 32 && !evt.repeat && !selectedArtifact) {
             if (camera.position.y <= 5.1) {
@@ -38,6 +38,7 @@ var createScene = function () {
         }
     });
 
+    // Indicateur d'interaction
     interactionPrompt = document.createElement("div");
     interactionPrompt.style.position = "absolute";
     interactionPrompt.style.top = "50%";
@@ -52,6 +53,39 @@ var createScene = function () {
     interactionPrompt.style.display = "none";
     interactionPrompt.textContent = "E : Regarder l'œuvre";
     document.body.appendChild(interactionPrompt);
+
+    var crosshair = document.createElement("div");
+    crosshair.id = "crosshair";
+    crosshair.style.position = "absolute";
+    crosshair.style.top = "50%";
+    crosshair.style.left = "50%";
+    crosshair.style.width = "20px";
+    crosshair.style.height = "20px";
+    crosshair.style.pointerEvents = "none";
+    crosshair.style.zIndex = "1000";
+    crosshair.style.display = "none";
+
+    var horizontal = document.createElement("div");
+    horizontal.style.position = "absolute";
+    horizontal.style.top = "50%";
+    horizontal.style.left = "0";
+    horizontal.style.width = "100%";
+    horizontal.style.height = "2px";
+    horizontal.style.backgroundColor = "rgba(128, 128, 128, 0.5)";
+    horizontal.style.transform = "translateY(-50%)";
+
+    var vertical = document.createElement("div");
+    vertical.style.position = "absolute";
+    vertical.style.top = "0";
+    vertical.style.left = "50%";
+    vertical.style.width = "2px";
+    vertical.style.height = "100%";
+    vertical.style.backgroundColor = "rgba(128, 128, 128, 0.5)";
+    vertical.style.transform = "translateX(-50%)";
+
+    crosshair.appendChild(horizontal);
+    crosshair.appendChild(vertical);
+    document.body.appendChild(crosshair);
 
     var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
     light.intensity = 0.7;
@@ -141,22 +175,22 @@ var createScene = function () {
 
         var pedestal = BABYLON.Mesh.MergeMeshes([pedestalBase, pedestalTop], true, true, undefined, false, true);
         pedestal.name = "pedestal";
-        pedestal.checkCollisions = true; // Réactivation des collisions pour les présentoirs
+        pedestal.checkCollisions = true;
         return pedestal;
     }
 
     function createVitrine(position, height) {
         var vitrine = BABYLON.MeshBuilder.CreateCylinder("vitrine", {
-            height: height + 1, // Hauteur légèrement supérieure au piédestal
-            diameter: 3,       // Diamètre suffisant pour englober l'œuvre
-            tessellation: 32   // Pour une apparence lisse
+            height: height + 1,
+            diameter: 3,
+            tessellation: 32
         }, scene);
         vitrine.position = new BABYLON.Vector3(position[0], (height + 1) / 2, position[2]);
         var vitrineMat = new BABYLON.StandardMaterial("vitrineMat", scene);
-        vitrineMat.diffuseColor = new BABYLON.Color3(0.8, 0.9, 1); // Couleur claire pour simuler le verre
-        vitrineMat.alpha = 0.3; // Transparence pour effet vitrine
+        vitrineMat.diffuseColor = new BABYLON.Color3(0.8, 0.9, 1);
+        vitrineMat.alpha = 0.3;
         vitrine.material = vitrineMat;
-        vitrine.checkCollisions = true; // Collisions activées pour empêcher de passer à travers
+        vitrine.checkCollisions = true;
         return vitrine;
     }
 
@@ -184,7 +218,7 @@ var createScene = function () {
 
     function loadGLBModel(index, position, pedestalHeight) {
         var pedestal = createPedestal([position[0], 0, position[2]], pedestalHeight);
-        var vitrine = createVitrine([position[0], 0, position[2]], pedestalHeight); // Ajout de la vitrine
+        var vitrine = createVitrine([position[0], 0, position[2]], pedestalHeight);
         var modelTask = assetsManager.addMeshTask("model" + index, "", "./assets/", "oeuvre" + (index + 1) + ".glb");
 
         modelTask.onSuccess = function(task) {
@@ -214,17 +248,15 @@ var createScene = function () {
             model.metadata = artifactData[index];
             artifacts[index] = model;
 
-            console.log(`Œuvre ${index + 1} chargée : ${artifactData[index].name} (fichier: oeuvre${index + 1}.glb)`);
-
             for (var i = 0; i < task.loadedMeshes.length; i++) {
                 task.loadedMeshes[i].isPickable = true;
                 task.loadedMeshes[i].metadata = artifactData[index];
-                task.loadedMeshes[i].checkCollisions = true; // Collisions réactivées pour les œuvres
+                task.loadedMeshes[i].checkCollisions = true;
             }
         };
 
         modelTask.onError = function(task, message, exception) {
-            console.log(`Erreur chargement œuvre ${index + 1} (oeuvre${index + 1}.glb) : ${message}`);
+            console.log(`Erreur chargement œuvre ${index + 1}: ${message}`);
             var fallbackCube = BABYLON.MeshBuilder.CreateBox("fallbackCube" + index, { width: 0.8, height: 0.8, depth: 0.8 }, scene);
             fallbackCube.position = new BABYLON.Vector3(position[0], pedestalHeight, position[2]);
             var cubeMat = new BABYLON.StandardMaterial("cubeMat" + index, scene);
@@ -238,7 +270,6 @@ var createScene = function () {
             fallbackCube.metadata = artifactData[index];
             artifacts[index] = fallbackCube;
             fallbackCube.checkCollisions = true;
-            console.log(`Cube de secours pour œuvre ${index + 1} : ${artifactData[index].name}`);
         };
     }
 
@@ -254,6 +285,7 @@ var createScene = function () {
         artifacts.forEach((artifact, idx) => {
             console.log(`Index ${idx}: ${artifact.metadata.name}`);
         });
+        // Modal reste ouverte jusqu'à ce que "Commencer l'exploration" soit cliqué
     };
 
     var infoPanel = document.getElementById("info");
@@ -296,6 +328,9 @@ var createScene = function () {
         highlightArtifactInList(-1);
         document.exitPointerLock();
         camera._keys = [];
+        camera.attachControl(canvas, true);
+        canvas.style.cursor = "default";
+        document.getElementById("crosshair").style.display = "none";
     }
 
     backButton.addEventListener("click", resetView);
@@ -322,6 +357,9 @@ var createScene = function () {
     function animateCamera(targetPosition, newPosition) {
         document.exitPointerLock();
         camera._keys = [];
+        camera.detachControl(canvas);
+        canvas.style.cursor = "default";
+        document.getElementById("crosshair").style.display = "none";
         BABYLON.Animation.CreateAndStartAnimation(
             "camPos",
             camera,
@@ -335,6 +373,8 @@ var createScene = function () {
             () => {
                 if (selectedArtifact) {
                     canvas.requestPointerLock();
+                    canvas.style.cursor = "default";
+                    document.getElementById("crosshair").style.display = "none";
                 }
             }
         );
@@ -351,8 +391,12 @@ var createScene = function () {
         );
     }
 
+    // Gestion unifiée des touches
     window.addEventListener("keydown", function (evt) {
-        if (evt.keyCode === 69) {
+        evt.preventDefault(); // Empêche les comportements par défaut du navigateur
+        if (evt.key === "Escape" && modal && modal.style.display === "flex") {
+            modal.style.display = "none";
+        } else if (evt.keyCode === 69) { // Touche "E"
             if (selectedArtifact) {
                 resetView();
             } else {
@@ -360,7 +404,7 @@ var createScene = function () {
                 var minDistance = Infinity;
                 artifacts.forEach((mesh, index) => {
                     var distance = BABYLON.Vector3.Distance(camera.position, mesh.position);
-                    if (distance < 10 && distance < minDistance) { // Distance augmentée de 5 à 10
+                    if (distance < 10 && distance < minDistance) {
                         nearestArtifact = mesh;
                         minDistance = distance;
                     }
@@ -379,20 +423,36 @@ var createScene = function () {
                     highlightArtifactInList(index);
                 }
             }
+        } else if (evt.key === "Alt" && document.pointerLockElement === canvas) {
+            document.exitPointerLock();
+        } else if (evt.key === "c" && !selectedArtifact && document.pointerLockElement !== canvas) {
+            canvas.requestPointerLock();
+        } else if (evt.key === "a" && modal) {
+            modal.style.display = "flex";
         }
     });
 
+    // Modifier l'événement mousedown pour ne pas interférer avec la modal
     document.addEventListener("mousedown", function (evt) {
-        if (evt.button === 0 && !selectedArtifact) {
-            canvas.requestPointerLock = canvas.requestPointerLock || canvas.msRequestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
-            if (canvas.requestPointerLock) {
-                canvas.requestPointerLock();
-            }
+        if (evt.button === 0 && !selectedArtifact && (!modal || modal.style.display === "none")) {
+            canvas.requestPointerLock();
+            canvas.style.cursor = "none";
+            document.getElementById("crosshair").style.display = "block";
+        }
+    });
+
+    document.addEventListener("pointerlockchange", function () {
+        if (document.pointerLockElement === canvas && !selectedArtifact) {
+            canvas.style.cursor = "none";
+            document.getElementById("crosshair").style.display = "block";
+        } else {
+            canvas.style.cursor = "default";
+            document.getElementById("crosshair").style.display = "none";
         }
     });
 
     document.addEventListener("mousemove", function (evt) {
-        if (!selectedArtifact) { // Mode FPS
+        if (!selectedArtifact) {
             var sensitivity = 0.002;
             var deltaX = evt.movementX * sensitivity;
             var deltaY = evt.movementY * sensitivity;
@@ -408,11 +468,10 @@ var createScene = function () {
             if (euler.x > Math.PI / 2) euler.x = Math.PI / 2;
             if (euler.x < -Math.PI / 2) euler.x = -Math.PI / 2;
             camera.rotationQuaternion = BABYLON.Quaternion.FromEulerAngles(euler.x, euler.y, euler.z);
-        } else if (selectedArtifact) { // Mode rotation autour de l'œuvre sans clic
+        } else if (selectedArtifact) {
             var sensitivity = 0.005;
             var deltaX = evt.movementX * sensitivity;
             var deltaY = evt.movementY * sensitivity;
-            console.log("Mouvement souris, deltaX =", deltaX, "deltaY =", deltaY);
 
             var distance = BABYLON.Vector3.Distance(camera.position, selectedArtifact.position);
             var direction = camera.position.subtract(selectedArtifact.position).normalize();
@@ -429,8 +488,6 @@ var createScene = function () {
 
             camera.position = selectedArtifact.position.add(direction.scale(distance));
             camera.setTarget(selectedArtifact.position);
-
-            console.log("Nouvelle position caméra :", camera.position);
         }
     });
 
@@ -449,44 +506,7 @@ var createScene = function () {
         }
     });
 
-    scene.onBeforeRenderObservable.add(() => {
-        if (!selectedArtifact) {
-            camera._localDirection.set(0, 0, 0);
-            if (camera._keys.includes(90) || camera._keys.includes(38)) {
-                camera._localDirection.z = 16;
-            }
-            if (camera._keys.includes(83) || camera._keys.includes(40)) {
-                camera._localDirection.z = -16;
-            }
-            if (camera._keys.includes(81) || camera._keys.includes(37)) {
-                camera._localDirection.x = -16;
-            }
-            if (camera._keys.includes(68) || camera._keys.includes(39)) {
-                camera._localDirection.x = 16;
-            }
-            if (camera._localDirection.length() > 0) {
-                camera.getViewMatrix().invertToRef(camera._cameraTransformMatrix);
-                BABYLON.Vector3.TransformNormalToRef(camera._localDirection, camera._cameraTransformMatrix, camera._transformedDirection);
-                camera._transformedDirection.y = 0;
-                camera.position.addInPlace(camera._transformedDirection.scaleInPlace(engine.getDeltaTime() / 1000));
-            }
-        }
-    });
-
-    window.addEventListener("keydown", function (evt) {
-        if (!selectedArtifact && !camera._keys.includes(evt.keyCode)) {
-            camera._keys.push(evt.keyCode);
-        }
-    });
-
-    window.addEventListener("keyup", function (evt) {
-        if (!selectedArtifact) {
-            var index = camera._keys.indexOf(evt.keyCode);
-            if (index > -1) {
-                camera._keys.splice(index, 1);
-            }
-        }
-    });
+    camera.attachControl(canvas, true);
 
     guidedTourButton.addEventListener("click", () => {
         if (isTourActive) return;
@@ -521,15 +541,6 @@ var createScene = function () {
         nextStep();
     });
 
-    canvas.addEventListener("click", function (evt) {
-        if (!selectedArtifact) {
-            canvas.requestPointerLock = canvas.requestPointerLock || canvas.msRequestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
-            if (canvas.requestPointerLock) {
-                canvas.requestPointerLock();
-            }
-        }
-    });
-
     return scene;
 };
 
@@ -558,41 +569,27 @@ function updateMinimap() {
 scene = createScene();
 
 var modal = document.getElementById("welcomeModal");
-var closeModalBtn = document.getElementById("closeModal");
+var startButton = document.getElementById("startExploration"); // Nouveau ID pour "Commencer l'exploration"
 var museumTitle = document.getElementById("museumTitle");
 
-if (!modal) console.error("L'élément #welcomeModal n'existe pas dans le HTML");
-if (!closeModalBtn) console.error("L'élément #closeModal n'existe pas dans le HTML");
-if (!museumTitle) console.error("L'élément #museumTitle n'existe pas dans le HTML");
-
 window.onload = function() {
-    if (modal) {
-        modal.style.display = "flex";
-    }
+    if (modal) modal.style.display = "flex"; // Modal ouverte au chargement
 };
 
-if (closeModalBtn) {
-    closeModalBtn.addEventListener("click", function() {
-        console.log("Bouton de fermeture cliqué");
+if (startButton) {
+    startButton.addEventListener("click", function(evt) {
+        evt.stopPropagation(); // Empêche la propagation au canvas
         if (modal) {
-            modal.style.display = "none";
+            modal.style.display = "none"; // Ferme la modal
         }
     });
 }
 
 if (museumTitle) {
     museumTitle.addEventListener("click", function() {
-        if (modal) {
-            modal.style.display = "flex";
-        }
+        if (modal) modal.style.display = "flex"; // Réouvre la modal
     });
 }
-
-window.addEventListener("keydown", function(evt) {
-    if (evt.key === "Escape" && modal && modal.style.display === "flex") {
-        modal.style.display = "none";
-    }
-});
 
 engine.runRenderLoop(function () {
     scene.render();
@@ -609,7 +606,7 @@ engine.runRenderLoop(function () {
     if (!selectedArtifact) {
         artifacts.forEach((mesh) => {
             var distance = BABYLON.Vector3.Distance(camera.position, mesh.position);
-            if (distance < 10) { // Distance augmentée pour le prompt aussi
+            if (distance < 10) {
                 showPrompt = true;
             }
         });

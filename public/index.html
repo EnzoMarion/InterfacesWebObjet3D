@@ -27,13 +27,22 @@
 </div>
 <canvas id="minimap" width="150" height="150"></canvas>
 <footer>
-    <p>Zoom : Molette | Rotation : Clic gauche + glisser | Déplacement : Clic droit + glisser</p>
+    <p>Zoom : Molette | Rotation : Clic gauche + glisser | Déplacement : ZQSD | Saut : Espace | Interaction : E | Verrouiller souris : C | Déverrouiller souris : Alt | Aide : A | Fermer modal : Échap</p>
 </footer>
 <div id="welcomeModal" class="modal">
     <div class="modal-content">
         <h2>Bienvenue au Musée Égyptien</h2>
-        <p>Explorez notre collection d’artefacts égyptiens en 3D ! Utilisez la molette pour zoomer, le clic gauche + glisser pour tourner, et le clic droit + glisser pour déplacer. Cliquez sur une œuvre pour découvrir son histoire. Cliquez sur le titre "Musée Égyptien" pour revoir ce guide.</p>
-        <button id="closeModal">Commencer l’exploration</button>
+        <p>Explorez une collection d’artefacts égyptiens en 3D ! Voici comment naviguer :</p>
+        <ul>
+            <li><strong>Déplacement :</strong> Utilisez les touches Z (avant), Q (gauche), S (arrière), D (droite).</li>
+            <li><strong>Saut :</strong> Appuyez sur Espace pour sauter.</li>
+            <li><strong>Rotation :</strong> Verrouillez la caméra avec C, puis déplacez-la pour regarder autour (mode FPS). Déverrouillez avec Alt.</li>
+            <li><strong>Zoom :</strong> Utilisez la molette pour zoomer sur une œuvre (quand sélectionnée).</li>
+            <li><strong>Interaction :</strong> Approchez-vous d’une œuvre et appuyez sur E pour la voir de près. Appuyez sur E ou clic sur "Retour" pour revenir.</li>
+            <li><strong>Modal :</strong> Appuyez sur A ou cliquez sur "Musée Égyptien" pour revoir ce guide. Fermez avec "Échap" ou "Commencer l’exploration".</li>
+            <li><strong>Visite guidée :</strong> Cliquez sur "Visite Guidée" dans le panneau d’info pour une exploration automatique.</li>
+        </ul>
+        <button id="startExploration">Commencer l’exploration</button>
     </div>
 </div>
 <script src="https://unpkg.com/earcut@2.2.4/dist/earcut.min.js"></script>
