@@ -180,15 +180,14 @@ var createScene = function () {
     }
 
     function createCollisionZone(position, height) {
-        // Zone de collision invisible plus large autour de chaque artefact
         var collisionZone = BABYLON.MeshBuilder.CreateCylinder("collisionZone", {
-            height: height + 2, // Plus haut que la vitrine pour englober l'artefact
-            diameter: 5, // Plus large que la vitrine pour éviter les collisions trop proches
+            height: height + 2,
+            diameter: 5,
             tessellation: 32
         }, scene);
         collisionZone.position = new BABYLON.Vector3(position[0], (height + 2) / 2, position[2]);
-        collisionZone.isVisible = false; // Invisible
-        collisionZone.checkCollisions = true; // Activer les collisions
+        collisionZone.isVisible = false;
+        collisionZone.checkCollisions = true;
         return collisionZone;
     }
 
@@ -202,11 +201,11 @@ var createScene = function () {
     var artifactData = [
         { name: "Statue de Bastet déesse", desc: "Statue représentant Bastet, déesse égyptienne à tête de chat, protectrice du foyer et symbole de la douceur domestique, datant de la période tardive." },
         { name: "Pyramidion de Ptahemwia", desc: "Pyramidion en pierre, sommet d’une pyramide ou d’un tombeau, appartenant à Ptahemwia, un haut fonctionnaire de la XVIIIe dynastie, orné de symboles solaires." },
-        { name: "Scarabée sacré", desc: "Amulette en forme de scarabée, symbole de renaissance et de transformation, souvent utilisée dans les rituels funéraires égyptiens." },
+        { name: "Statue de Raia et Ptah", desc: "Statue représentant Raia, un dignitaire, et Ptah, dieu créateur et patron des artisans, symbolisant la dévotion et l’artisanat dans l’Égypte antique." },
         { name: "Table d'offrande par Defdji", desc: "Table d’offrande en pierre dédiée par Defdji, prêtre de l’Ancien Empire, utilisée pour présenter des offrandes aux défunts dans les tombes." },
         { name: "Buste ptolémaïque", desc: "Buste sculpté d’un dignitaire ou d’une divinité de l’époque ptolémaïque, mêlant styles grec et égyptien, datant d’environ 300-30 av. J.-C." },
-        { name: "Sarcophage miniature", desc: "Reproduction d’un sarcophage égyptien décoré de hiéroglyphes, utilisé pour abriter les momies dans les tombes royales." },
-        { name: "Tablette hiéroglyphique", desc: "Pierre gravée de textes hiéroglyphiques anciens, probablement une stèle commémorative ou un décret royal." },
+        { name: "Ancien relief égyptien avec hiéroglyphes", desc: "Relief en pierre finement sculpté, orné de hiéroglyphes détaillant des événements royaux ou religieux, typique des tombes et temples égyptiens anciens." },
+        { name: "La fuite en Égypte", desc: "Statue illustrant une scène mythique ou historique, représentant une famille ou un groupe en déplacement, inspirée des récits liés à l’Égypte antique." },
         { name: "Maquette de bateau d'Égypte", desc: "Maquette en bois d’un bateau égyptien, symbole du voyage dans l’au-delà, souvent placée dans les tombes pour accompagner le défunt." },
         { name: "Statue de Neith déesse", desc: "Statue de Neith, déesse de la guerre et de la chasse, représentée avec un arc et des flèches, vénérée dès l’époque prédynastique." },
         { name: "Ramsès II Egyptian statue", desc: "Statue colossale de Ramsès II, pharaon de la XIXe dynastie, symbole de puissance et de divinité, érigée dans les temples de l’Égypte antique." }
@@ -216,40 +215,70 @@ var createScene = function () {
 
     function loadGLBModel(index, position, pedestalHeight) {
         var pedestal = createPedestal([position[0], 0, position[2]], pedestalHeight);
-        var collisionZone = createCollisionZone([position[0], 0, position[2]], pedestalHeight); // Ajout de la zone de collision
+        var collisionZone = createCollisionZone([position[0], 0, position[2]], pedestalHeight);
         var modelTask = assetsManager.addMeshTask("model" + index, "", "./assets/", "oeuvre" + (index + 1) + ".glb");
 
         modelTask.onSuccess = function(task) {
             var model = task.loadedMeshes[0];
-            var scaleFactor;
+            var scaleFactor, offsetY;
             var artifactName = artifactData[index].name;
-            if (["Ramsès II Egyptian statue", "Pyramidion de Ptahemwia", "Scarabée sacré"].includes(artifactName)) {
-                scaleFactor = 1.5;
-            } else if (artifactName === "Table d'offrande par Defdji") {
-                scaleFactor = 0.1;
-            } else if (artifactName === "Buste ptolémaïque") {
-                scaleFactor = 2.5;
-            } else if (artifactName === "Statue de Bastet déesse") {
-                scaleFactor = 0.03;
-            } else if (["Tablette hiéroglyphique"].includes(artifactName)) {
-                scaleFactor = 0.01;
-            } else if (artifactName === "Sarcophage miniature") {
-                scaleFactor = 0.009;
-            } else if (artifactName === "Maquette de bateau d'Égypte") {
-                scaleFactor = 0.006;
-            } else {
-                scaleFactor = 0.05;
+
+            // Ajustement des échelles et décalages verticaux pour poser les artefacts sur le présentoir
+            switch (artifactName) {
+                case "Statue de Bastet déesse":
+                    scaleFactor = 0.02;
+                    offsetY = -0.3;
+                    break;
+                case "Pyramidion de Ptahemwia":
+                    scaleFactor = 1.0;
+                    offsetY = 0.1;
+                    break;
+                case "Statue de Raia et Ptah":
+                    scaleFactor = 1.2;
+                    offsetY = -0.5;
+                    break;
+                case "Table d'offrande par Defdji":
+                    scaleFactor = 0.15;
+                    offsetY = 0;
+                    break;
+                case "Buste ptolémaïque":
+                    scaleFactor = 1.5;
+                    offsetY = 0.2;
+                    break;
+                case "Ancien relief égyptien avec hiéroglyphes":
+                    scaleFactor = 0.015;
+                    offsetY = 0;
+                    break;
+                case "La fuite en Égypte":
+                    scaleFactor = 6.0;
+                    offsetY = 0.1;
+                    break;
+                case "Maquette de bateau d'Égypte":
+                    scaleFactor = 0.005;
+                    offsetY = 0;
+                    break;
+                case "Statue de Neith déesse":
+                    scaleFactor = 0.09;
+                    offsetY = 1.0;
+                    break;
+                case "Ramsès II Egyptian statue":
+                    scaleFactor = 1.5;
+                    offsetY = 0;
+                    break;
+                default:
+                    scaleFactor = 0.05;
+                    offsetY = 0;
             }
 
             model.scaling = new BABYLON.Vector3(scaleFactor, scaleFactor, scaleFactor);
-            model.position = new BABYLON.Vector3(position[0], pedestalHeight, position[2]);
+            // Position avec décalage vertical ajusté
+            model.position = new BABYLON.Vector3(position[0], pedestalHeight + offsetY, position[2]);
             model.metadata = artifactData[index];
             artifacts[index] = model;
 
             for (var i = 0; i < task.loadedMeshes.length; i++) {
                 task.loadedMeshes[i].isPickable = true;
                 task.loadedMeshes[i].metadata = artifactData[index];
-                // Désactiver les collisions directes sur le modèle pour utiliser la zone invisible
                 task.loadedMeshes[i].checkCollisions = false;
             }
         };
@@ -257,7 +286,7 @@ var createScene = function () {
         modelTask.onError = function(task, message, exception) {
             console.log(`Erreur chargement œuvre ${index + 1}: ${message}`);
             var fallbackCube = BABYLON.MeshBuilder.CreateBox("fallbackCube" + index, { width: 0.8, height: 0.8, depth: 0.8 }, scene);
-            fallbackCube.position = new BABYLON.Vector3(position[0], pedestalHeight, position[2]);
+            fallbackCube.position = new BABYLON.Vector3(position[0], pedestalHeight, position[2]); // Cube posé directement
             var cubeMat = new BABYLON.StandardMaterial("cubeMat" + index, scene);
             var colorIndex = index % 5;
             if (colorIndex === 0) cubeMat.diffuseColor = new BABYLON.Color3(0.85, 0.7, 0.2);
@@ -268,7 +297,6 @@ var createScene = function () {
             fallbackCube.material = cubeMat;
             fallbackCube.metadata = artifactData[index];
             artifacts[index] = fallbackCube;
-            // Désactiver les collisions directes sur le cube de secours
             fallbackCube.checkCollisions = false;
         };
     }
