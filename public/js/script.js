@@ -226,16 +226,16 @@ var createScene = function () {
         var modelTask = assetsManager.addMeshTask("model" + index, "", "./assets/", "oeuvre" + (index + 1) + ".glb");
 
         modelTask.onSuccess = function(task) {
-            var model = task.loadedMeshes[0];
+            var model = task.loadedMeshes[0]; // Mesh racine
             var scaleFactor, offsetX, offsetY, offsetZ;
             var artifactName = artifactData[index].name;
 
             switch (artifactName) {
                 case "Statue de Bastet déesse":
                     scaleFactor = 0.02;
-                    offsetX = -0.8;
+                    offsetX = 0;
                     offsetY = 2.4;
-                    offsetZ = 0.6;
+                    offsetZ = 0.3;
                     break;
                 case "Pyramidion de Ptahemwia":
                     scaleFactor = 1.0;
@@ -301,13 +301,28 @@ var createScene = function () {
             model.scaling = new BABYLON.Vector3(scaleFactor, scaleFactor, scaleFactor);
             model.position = new BABYLON.Vector3(position[0] + offsetX, adjustedHeight + offsetY, position[2] + offsetZ);
             model.metadata = artifactData[index];
+            model.metadata.isRotating = false;
+
+            // Stocker les valeurs initiales de rotation pour X et Z
+            model.metadata.initialRotationX = model.rotation.x;
+            model.metadata.initialRotationZ = model.rotation.z;
+
             artifacts[index] = model;
 
-            for (var i = 0; i < task.loadedMeshes.length; i++) {
-                task.loadedMeshes[i].isPickable = true;
-                task.loadedMeshes[i].metadata = artifactData[index];
-                task.loadedMeshes[i].checkCollisions = false;
-            }
+            task.loadedMeshes.forEach(mesh => {
+                mesh.isPickable = true;
+                mesh.metadata = artifactData[index];
+                mesh.checkCollisions = false;
+                if (mesh.rotationQuaternion) {
+                    mesh.rotation = mesh.rotationQuaternion.toEulerAngles();
+                    mesh.rotationQuaternion = null;
+                }
+                // Stocker les valeurs initiales pour les enfants aussi
+                mesh.metadata.initialRotationX = mesh.rotation.x;
+                mesh.metadata.initialRotationZ = mesh.rotation.z;
+            });
+
+            console.log(`Loaded artifact ${artifactName} with ${task.loadedMeshes.length} meshes`);
         };
 
         modelTask.onError = function(task, message, exception) {
@@ -323,6 +338,9 @@ var createScene = function () {
             else cubeMat.diffuseColor = new BABYLON.Color3(0.6, 0.25, 0.2);
             fallbackCube.material = cubeMat;
             fallbackCube.metadata = artifactData[index];
+            fallbackCube.metadata.isRotating = false;
+            fallbackCube.metadata.initialRotationX = 0; // Cube par défaut
+            fallbackCube.metadata.initialRotationZ = 0;
             artifacts[index] = fallbackCube;
             fallbackCube.checkCollisions = false;
         };
@@ -348,6 +366,7 @@ var createScene = function () {
     var descriptionElement = document.getElementById("description");
     var backButton = document.getElementById("back");
     var guidedTourButton = document.getElementById("guidedTour");
+    var rotateModelButton = document.getElementById("toggleRotation");
     var tourTimeInput = document.getElementById("tourTime");
     var artifactList = document.getElementById("artifactItems");
     minimapCanvas = document.getElementById("minimap");
@@ -392,6 +411,11 @@ var createScene = function () {
         camera.attachControl(canvas, true);
         canvas.style.cursor = "default";
         document.getElementById("crosshair").style.display = "none";
+        if (rotateModelButton) rotateModelButton.textContent = "Activer Rotation";
+        artifacts.forEach(artifact => {
+            artifact.metadata.isRotating = false; // Arrête la rotation mais conserve la dernière valeur Y
+        });
+        console.log("View reset - Rotation stopped for all artifacts");
     }
 
     backButton.addEventListener("click", resetView);
@@ -411,6 +435,7 @@ var createScene = function () {
 
                 animateCamera(mesh.position, new BABYLON.Vector3(mesh.position.x, mesh.position.y + 5, mesh.position.z - 5));
                 highlightArtifactInList(index);
+                console.log(`Artifact selected from list: ${mesh.metadata.name}`);
             }
         }
     });
@@ -468,6 +493,19 @@ var createScene = function () {
     viewRightButton.addEventListener("click", () => moveCameraAroundArtifact(-Math.PI / 2, 0, 8));
     viewFrontButton.addEventListener("click", () => moveCameraAroundArtifact(0, 0, 8));
 
+    // Gestion du bouton toggleRotation
+    if (rotateModelButton) {
+        rotateModelButton.addEventListener("click", () => {
+            if (selectedArtifact && selectedArtifact.metadata) {
+                selectedArtifact.metadata.isRotating = !selectedArtifact.metadata.isRotating;
+                rotateModelButton.textContent = selectedArtifact.metadata.isRotating ? "Désactiver Rotation" : "Activer Rotation";
+                console.log(`Rotation toggled: ${selectedArtifact.metadata.isRotating ? "Started" : "Stopped"} for artifact ${selectedArtifact.metadata.name}, current rotation.y: ${selectedArtifact.rotation.y}`);
+            } else {
+                console.log("No artifact selected to toggle rotation");
+            }
+        });
+    }
+
     window.addEventListener("keydown", function (evt) {
         evt.preventDefault();
         if (evt.key === "Escape" && modal && modal.style.display === "flex") {
@@ -497,6 +535,7 @@ var createScene = function () {
                     animateCamera(nearestArtifact.position, new BABYLON.Vector3(nearestArtifact.position.x, nearestArtifact.position.y + 5, nearestArtifact.position.z - 5));
                     var index = artifacts.indexOf(nearestArtifact);
                     highlightArtifactInList(index);
+                    console.log(`Nearest artifact selected: ${nearestArtifact.metadata.name}`);
                 }
             }
         } else if (evt.key === "Alt" && document.pointerLockElement === canvas) {
@@ -623,6 +662,13 @@ var createScene = function () {
             }
         }
         nextStep();
+    });
+
+    scene.registerBeforeRender(function () {
+        if (selectedArtifact && selectedArtifact.metadata && selectedArtifact.metadata.isRotating) {
+            selectedArtifact.rotation.y += 0.02; // Vitesse de rotation ajustable
+            console.log(`Rotating artifact: ${selectedArtifact.metadata.name}, rotation.y: ${selectedArtifact.rotation.y}`);
+        }
     });
 
     return scene;
