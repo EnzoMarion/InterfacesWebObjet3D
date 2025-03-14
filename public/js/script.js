@@ -1,9 +1,18 @@
 var canvas = document.getElementById("renderCanvas");
 var engine = new BABYLON.Engine(canvas, true);
 
-var scene, artifacts, camera, minimapCanvas, minimapCtx, tourTimeout, isTourActive = false, interactionPrompt;
+var scene, artifacts, camera, artifactCamera, minimapCanvas, minimapCtx, tourTimeout, isTourActive = false, interactionPrompt;
 var previousPosition, previousTarget, selectedArtifact = null;
 var isMouseDown = false;
+var isArtifactMode = false;
+
+var keysPressed = {
+    up: false,    // Z (90)
+    down: false,  // S (83)
+    left: false,  // Q (81)
+    right: false, // D (68)
+    jump: false   // Espace (32)
+};
 
 var createScene = function () {
     scene = new BABYLON.Scene(engine);
@@ -28,9 +37,33 @@ var createScene = function () {
     camera.jumpSpeed = 3;
 
     window.addEventListener("keydown", function (evt) {
-        if (evt.keyCode === 32 && !evt.repeat && !selectedArtifact) {
-            if (camera.position.y <= 5.1) {
-                camera.cameraDirection.y = camera.jumpSpeed;
+        if (!evt.repeat) {
+            if (evt.keyCode === 32 && !selectedArtifact && !isArtifactMode) {
+                if (camera.position.y <= 5.1) {
+                    camera.cameraDirection.y = camera.jumpSpeed;
+                }
+            }
+            if (isArtifactMode && selectedArtifact) {
+                switch (evt.keyCode) {
+                    case 90: keysPressed.up = true; break;    // Z
+                    case 83: keysPressed.down = true; break;  // S
+                    case 81: keysPressed.left = true; break;  // Q
+                    case 68: keysPressed.right = true; break; // D
+                    case 32: keysPressed.jump = true; break;  // Espace
+                    case 70: resetView(); break;              // F pour quitter
+                }
+            }
+        }
+    });
+
+    window.addEventListener("keyup", function (evt) {
+        if (isArtifactMode) {
+            switch (evt.keyCode) {
+                case 90: keysPressed.up = false; break;    // Z
+                case 83: keysPressed.down = false; break;  // S
+                case 81: keysPressed.left = false; break;  // Q
+                case 68: keysPressed.right = false; break; // D
+                case 32: keysPressed.jump = false; break;  // Espace
             }
         }
     });
@@ -103,11 +136,6 @@ var createScene = function () {
     groundMat.bumpTexture.vScale = 20;
     groundMat.bumpTexture.level = 1.2;
 
-    groundMat.displacementMap = new BABYLON.Texture("./assets/sand_displacement.jpg", scene);
-    groundMat.displacementMap.uScale = 15;
-    groundMat.displacementMap.vScale = 15;
-    groundMat.displacementMapLevel = 4;
-
     ground.material = groundMat;
     ground.checkCollisions = true;
 
@@ -143,11 +171,6 @@ var createScene = function () {
     pyramidMat.bumpTexture.uScale = 1;
     pyramidMat.bumpTexture.vScale = 1;
     pyramidMat.bumpTexture.level = 1.0;
-
-    pyramidMat.displacementMap = new BABYLON.Texture("./assets/wall_displacement.jpg", scene);
-    pyramidMat.displacementMap.uScale = 1;
-    pyramidMat.displacementMap.vScale = 1;
-    pyramidMat.displacementMapLevel = 2.0;
 
     pyramid.material = pyramidMat;
 
@@ -226,7 +249,7 @@ var createScene = function () {
         var modelTask = assetsManager.addMeshTask("model" + index, "", "./assets/", "oeuvre" + (index + 1) + ".glb");
 
         modelTask.onSuccess = function(task) {
-            var model = task.loadedMeshes[0]; // Mesh racine
+            var model = task.loadedMeshes[0];
             var scaleFactor, offsetX, offsetY, offsetZ;
             var artifactName = artifactData[index].name;
 
@@ -302,8 +325,8 @@ var createScene = function () {
             model.position = new BABYLON.Vector3(position[0] + offsetX, adjustedHeight + offsetY, position[2] + offsetZ);
             model.metadata = artifactData[index];
             model.metadata.isRotating = false;
+            model.metadata.initialY = model.position.y;
 
-            // Stocker les valeurs initiales de rotation pour X et Z
             model.metadata.initialRotationX = model.rotation.x;
             model.metadata.initialRotationZ = model.rotation.z;
 
@@ -312,21 +335,18 @@ var createScene = function () {
             task.loadedMeshes.forEach(mesh => {
                 mesh.isPickable = true;
                 mesh.metadata = artifactData[index];
-                mesh.checkCollisions = false;
+                mesh.checkCollisions = true;
                 if (mesh.rotationQuaternion) {
                     mesh.rotation = mesh.rotationQuaternion.toEulerAngles();
                     mesh.rotationQuaternion = null;
                 }
-                // Stocker les valeurs initiales pour les enfants aussi
                 mesh.metadata.initialRotationX = mesh.rotation.x;
                 mesh.metadata.initialRotationZ = mesh.rotation.z;
             });
 
-            console.log(`Loaded artifact ${artifactName} with ${task.loadedMeshes.length} meshes`);
         };
 
         modelTask.onError = function(task, message, exception) {
-            console.log(`Erreur chargement œuvre ${index + 1}: ${message}`);
             var fallbackCube = BABYLON.MeshBuilder.CreateBox("fallbackCube" + index, { width: 0.8, height: 0.8, depth: 0.8 }, scene);
             fallbackCube.position = new BABYLON.Vector3(position[0], adjustedHeight, position[2]);
             var cubeMat = new BABYLON.StandardMaterial("cubeMat" + index, scene);
@@ -339,10 +359,11 @@ var createScene = function () {
             fallbackCube.material = cubeMat;
             fallbackCube.metadata = artifactData[index];
             fallbackCube.metadata.isRotating = false;
-            fallbackCube.metadata.initialRotationX = 0; // Cube par défaut
+            fallbackCube.metadata.initialY = fallbackCube.position.y;
+            fallbackCube.metadata.initialRotationX = 0;
             fallbackCube.metadata.initialRotationZ = 0;
             artifacts[index] = fallbackCube;
-            fallbackCube.checkCollisions = false;
+            fallbackCube.checkCollisions = true;
         };
     }
 
@@ -356,7 +377,6 @@ var createScene = function () {
 
         assetsManager.onFinish = function() {
             artifacts.forEach((artifact, idx) => {
-                console.log(`Index ${idx}: ${artifact.metadata.name}`);
             });
         };
     })();
@@ -367,6 +387,7 @@ var createScene = function () {
     var backButton = document.getElementById("back");
     var guidedTourButton = document.getElementById("guidedTour");
     var rotateModelButton = document.getElementById("toggleRotation");
+    var becomeArtifactButton = document.getElementById("becomeArtifact");
     var tourTimeInput = document.getElementById("tourTime");
     var artifactList = document.getElementById("artifactItems");
     minimapCanvas = document.getElementById("minimap");
@@ -400,6 +421,12 @@ var createScene = function () {
         isTourActive = false;
         selectedArtifact = null;
         isMouseDown = false;
+        isArtifactMode = false;
+        if (artifactCamera) {
+            artifactCamera.dispose();
+            artifactCamera = null;
+        }
+        scene.activeCamera = camera;
         if (previousPosition && previousTarget) {
             camera.position = previousPosition.clone();
             camera.setTarget(previousTarget.clone());
@@ -412,10 +439,12 @@ var createScene = function () {
         canvas.style.cursor = "default";
         document.getElementById("crosshair").style.display = "none";
         if (rotateModelButton) rotateModelButton.textContent = "Activer Rotation";
+        if (becomeArtifactButton) becomeArtifactButton.textContent = "Devenir l'œuvre";
         artifacts.forEach(artifact => {
-            artifact.metadata.isRotating = false; // Arrête la rotation mais conserve la dernière valeur Y
+            artifact.metadata.isRotating = false;
+            artifact.metadata.velocityY = 0;
+            artifact.position.y = artifact.metadata.initialY; // Réinitialiser la position Y
         });
-        console.log("View reset - Rotation stopped for all artifacts");
     }
 
     backButton.addEventListener("click", resetView);
@@ -435,7 +464,6 @@ var createScene = function () {
 
                 animateCamera(mesh.position, new BABYLON.Vector3(mesh.position.x, mesh.position.y + 5, mesh.position.z - 5));
                 highlightArtifactInList(index);
-                console.log(`Artifact selected from list: ${mesh.metadata.name}`);
             }
         }
     });
@@ -457,7 +485,7 @@ var createScene = function () {
             BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
             new BABYLON.QuadraticEase(),
             () => {
-                if (selectedArtifact) {
+                if (selectedArtifact && !isArtifactMode) {
                     canvas.requestPointerLock();
                     canvas.style.cursor = "default";
                     document.getElementById("crosshair").style.display = "none";
@@ -478,7 +506,7 @@ var createScene = function () {
     }
 
     function moveCameraAroundArtifact(angleY, angleX, distance = 5) {
-        if (selectedArtifact) {
+        if (selectedArtifact && !isArtifactMode) {
             var artifactPos = selectedArtifact.position;
             var newPosX = artifactPos.x + distance * Math.sin(angleY) * Math.cos(angleX);
             var newPosZ = artifactPos.z + distance * Math.cos(angleY) * Math.cos(angleX);
@@ -493,15 +521,44 @@ var createScene = function () {
     viewRightButton.addEventListener("click", () => moveCameraAroundArtifact(-Math.PI / 2, 0, 8));
     viewFrontButton.addEventListener("click", () => moveCameraAroundArtifact(0, 0, 8));
 
-    // Gestion du bouton toggleRotation
     if (rotateModelButton) {
         rotateModelButton.addEventListener("click", () => {
             if (selectedArtifact && selectedArtifact.metadata) {
                 selectedArtifact.metadata.isRotating = !selectedArtifact.metadata.isRotating;
                 rotateModelButton.textContent = selectedArtifact.metadata.isRotating ? "Désactiver Rotation" : "Activer Rotation";
-                console.log(`Rotation toggled: ${selectedArtifact.metadata.isRotating ? "Started" : "Stopped"} for artifact ${selectedArtifact.metadata.name}, current rotation.y: ${selectedArtifact.rotation.y}`);
-            } else {
-                console.log("No artifact selected to toggle rotation");
+            }
+        });
+    }
+
+    if (becomeArtifactButton) {
+        becomeArtifactButton.addEventListener("click", () => {
+            if (selectedArtifact && !isTourActive) {
+                isArtifactMode = true;
+                becomeArtifactButton.textContent = "Quitter le mode œuvre";
+                infoPanel.style.display = "none";
+
+                camera.detachControl(canvas);
+                scene.activeCamera = null;
+
+                artifactCamera = new BABYLON.FollowCamera("artifactCamera", new BABYLON.Vector3(0, 10, 20), scene);
+                artifactCamera.lockedTarget = selectedArtifact;
+                artifactCamera.radius = 5;
+                artifactCamera.heightOffset = 3;
+                artifactCamera.rotationOffset = 0;
+                artifactCamera.cameraAcceleration = 0.1;
+                artifactCamera.maxCameraSpeed = 5;
+                artifactCamera.noRotationConstraint = true;
+                scene.activeCamera = artifactCamera;
+
+                selectedArtifact.metadata.velocityY = 0;
+                selectedArtifact.ellipsoid = new BABYLON.Vector3(0.3, 0.5, 0.3);
+                selectedArtifact.checkCollisions = true;
+                selectedArtifact.applyGravity = true;
+
+                selectedArtifact.position.y += 2;
+                selectedArtifact.position.x += 2;
+
+                canvas.requestPointerLock();
             }
         });
     }
@@ -511,9 +568,9 @@ var createScene = function () {
         if (evt.key === "Escape" && modal && modal.style.display === "flex") {
             modal.style.display = "none";
         } else if (evt.keyCode === 69) {
-            if (selectedArtifact) {
+            if (selectedArtifact && !isArtifactMode) {
                 resetView();
-            } else {
+            } else if (!isArtifactMode) {
                 var nearestArtifact = null;
                 var minDistance = Infinity;
                 artifacts.forEach((mesh, index) => {
@@ -535,21 +592,22 @@ var createScene = function () {
                     animateCamera(nearestArtifact.position, new BABYLON.Vector3(nearestArtifact.position.x, nearestArtifact.position.y + 5, nearestArtifact.position.z - 5));
                     var index = artifacts.indexOf(nearestArtifact);
                     highlightArtifactInList(index);
-                    console.log(`Nearest artifact selected: ${nearestArtifact.metadata.name}`);
                 }
             }
         } else if (evt.key === "Alt" && document.pointerLockElement === canvas) {
             document.exitPointerLock();
-        } else if (evt.key === "c" && !selectedArtifact && document.pointerLockElement !== canvas) {
+        } else if (evt.key === "c" && !selectedArtifact && !isArtifactMode && document.pointerLockElement !== canvas) {
             canvas.requestPointerLock();
         } else if (evt.key === "a" && modal) {
             modal.style.display = "flex";
+        } else if (evt.key === "r") { // Touche R pour recharger partout
+            location.reload(true);
         }
     });
 
     document.addEventListener("mousedown", function (evt) {
         if (evt.button === 0) {
-            if (!selectedArtifact && (!modal || modal.style.display === "none")) {
+            if (!selectedArtifact && !isArtifactMode && (!modal || modal.style.display === "none")) {
                 canvas.requestPointerLock();
                 canvas.style.cursor = "none";
                 document.getElementById("crosshair").style.display = "block";
@@ -565,7 +623,10 @@ var createScene = function () {
     });
 
     document.addEventListener("pointerlockchange", function () {
-        if (document.pointerLockElement === canvas && !selectedArtifact) {
+        if (document.pointerLockElement === canvas && !selectedArtifact && !isArtifactMode) {
+            canvas.style.cursor = "none";
+            document.getElementById("crosshair").style.display = "block";
+        } else if (document.pointerLockElement === canvas && isArtifactMode) {
             canvas.style.cursor = "none";
             document.getElementById("crosshair").style.display = "block";
         } else {
@@ -575,7 +636,7 @@ var createScene = function () {
     });
 
     document.addEventListener("mousemove", function (evt) {
-        if (!selectedArtifact) {
+        if (!selectedArtifact && !isArtifactMode) {
             var sensitivity = 0.002;
             var deltaX = evt.movementX * sensitivity;
             var deltaY = evt.movementY * sensitivity;
@@ -591,7 +652,7 @@ var createScene = function () {
             if (euler.x > Math.PI / 2) euler.x = Math.PI / 2;
             if (euler.x < -Math.PI / 2) euler.x = -Math.PI / 2;
             camera.rotationQuaternion = BABYLON.Quaternion.FromEulerAngles(euler.x, euler.y, euler.z);
-        } else if (selectedArtifact && isMouseDown) {
+        } else if (selectedArtifact && !isArtifactMode && isMouseDown) {
             var sensitivity = 0.005;
             var deltaX = evt.movementX * sensitivity;
             var deltaY = evt.movementY * sensitivity;
@@ -611,11 +672,18 @@ var createScene = function () {
 
             camera.position = selectedArtifact.position.add(direction.scale(distance));
             camera.setTarget(selectedArtifact.position);
+        } else if (isArtifactMode && selectedArtifact && artifactCamera && document.pointerLockElement === canvas) {
+            var sensitivity = 0.5;
+            var deltaX = evt.movementX * sensitivity;
+            var deltaY = evt.movementY * sensitivity;
+
+            artifactCamera.rotationOffset += deltaX;
+            artifactCamera.heightOffset = Math.max(1, Math.min(10, artifactCamera.heightOffset - deltaY));
         }
     });
 
     canvas.addEventListener("wheel", function (evt) {
-        if (selectedArtifact) {
+        if (selectedArtifact && !isArtifactMode) {
             var zoomSpeed = 0.5;
             var distance = BABYLON.Vector3.Distance(camera.position, selectedArtifact.position);
             var direction = camera.position.subtract(selectedArtifact.position).normalize();
@@ -626,13 +694,16 @@ var createScene = function () {
             camera.position = selectedArtifact.position.add(direction.scale(distance));
             camera.setTarget(selectedArtifact.position);
             evt.preventDefault();
+        } else if (isArtifactMode && selectedArtifact && artifactCamera) {
+            artifactCamera.radius = Math.max(2, Math.min(10, artifactCamera.radius + evt.deltaY * 0.1));
+            evt.preventDefault();
         }
     });
 
     camera.attachControl(canvas, true);
 
     guidedTourButton.addEventListener("click", () => {
-        if (isTourActive) return;
+        if (isTourActive || isArtifactMode) return;
         isTourActive = true;
         let i = 0;
         var tourTime = parseInt(tourTimeInput.value) * 1000;
@@ -665,9 +736,44 @@ var createScene = function () {
     });
 
     scene.registerBeforeRender(function () {
-        if (selectedArtifact && selectedArtifact.metadata && selectedArtifact.metadata.isRotating) {
-            selectedArtifact.rotation.y += 0.02; // Vitesse de rotation ajustable
-            console.log(`Rotating artifact: ${selectedArtifact.metadata.name}, rotation.y: ${selectedArtifact.rotation.y}`);
+        if (selectedArtifact && selectedArtifact.metadata && selectedArtifact.metadata.isRotating && !isArtifactMode) {
+            selectedArtifact.rotation.y += 0.02;
+        }
+        if (isArtifactMode && selectedArtifact && artifactCamera) {
+            var deltaTime = engine.getDeltaTime() / 1000;
+            var direction = artifactCamera.getFrontPosition(1).subtract(artifactCamera.position).normalize();
+            direction.y = 0;
+            var moveSpeed = 0.2;
+            var movement = new BABYLON.Vector3(0, 0, 0);
+
+            if (keysPressed.up) {
+                movement.addInPlace(direction.scale(moveSpeed));
+            }
+            if (keysPressed.down) {
+                movement.addInPlace(direction.scale(-moveSpeed));
+            }
+            if (keysPressed.left) {
+                movement.addInPlace(BABYLON.Vector3.Cross(direction, BABYLON.Vector3.Up()).scale(moveSpeed));
+            }
+            if (keysPressed.right) {
+                movement.addInPlace(BABYLON.Vector3.Cross(direction, BABYLON.Vector3.Up()).scale(-moveSpeed));
+            }
+
+            if (keysPressed.jump && Math.abs(selectedArtifact.position.y - selectedArtifact.metadata.initialY) <= 0.2) {
+                selectedArtifact.metadata.velocityY = 5;
+                keysPressed.jump = false;
+            }
+            if (selectedArtifact.applyGravity) {
+                selectedArtifact.metadata.velocityY += -2 * deltaTime * 20;
+            }
+            movement.y = selectedArtifact.metadata.velocityY * deltaTime;
+
+            selectedArtifact.moveWithCollisions(movement);
+
+            if (selectedArtifact.position.y < selectedArtifact.metadata.initialY) {
+                selectedArtifact.position.y = selectedArtifact.metadata.initialY;
+                selectedArtifact.metadata.velocityY = 0;
+            }
         }
     });
 
@@ -690,8 +796,8 @@ function updateMinimap() {
         minimapCtx.fill();
     });
 
-    var camX = (camera.position.x + 50) * 1.5;
-    var camZ = (camera.position.z + 50) * 1.5;
+    var camX = (scene.activeCamera.position.x + 50) * 1.5;
+    var camZ = (scene.activeCamera.position.z + 50) * 1.5;
     minimapCtx.fillStyle = "red";
     minimapCtx.beginPath();
     minimapCtx.arc(camX, camZ, 5, 0, 2 * Math.PI);
@@ -725,15 +831,15 @@ engine.runRenderLoop(function () {
     scene.render();
     updateMinimap();
 
-    if (!selectedArtifact && camera.position.y > 5) {
+    if (!selectedArtifact && !isArtifactMode && camera.position.y > 5) {
         camera.cameraDirection.y += scene.gravity.y * engine.getDeltaTime() / 1000;
-    } else if (!selectedArtifact && camera.position.y < 5) {
+    } else if (!selectedArtifact && !isArtifactMode && camera.position.y < 5) {
         camera.position.y = 5;
         camera.cameraDirection.y = 0;
     }
 
     var showPrompt = false;
-    if (!selectedArtifact) {
+    if (!selectedArtifact && !isArtifactMode) {
         artifacts.forEach((mesh) => {
             var distance = BABYLON.Vector3.Distance(camera.position, mesh.position);
             if (distance < 10) {
