@@ -11,7 +11,7 @@ Ce projet est un musée virtuel en 3D permettant d'explorer une collection d'art
 1. **Prérequis :** Un navigateur web moderne (Chrome, Firefox, etc.) avec une connexion internet pour charger les dépendances BabylonJS via CDN.
 2. **Installation :**
     - Clonnez le lien Github.
-3. **Lancement :** faire "npm start" a la racine du projet. Une fenêtre modale de bienvenue s’affichera avec les instructions de base.
+3. **Lancement :** faire "npm install" puis "npm start" a la racine du projet pour lancer le projet. Une fenêtre modale de bienvenue s’affichera avec les instructions de base.
 4. **Exploration :** Suivez les contrôles listés ci-dessous pour interagir avec le musée.
 
 ## Interactions mises en place
