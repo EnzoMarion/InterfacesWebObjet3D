@@ -7,11 +7,11 @@ var isMouseDown = false;
 var isArtifactMode = false;
 
 var keysPressed = {
-    up: false,    // Z (90)
-    down: false,  // S (83)
-    left: false,  // Q (81)
-    right: false, // D (68)
-    jump: false   // Espace (32)
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+    jump: false
 };
 
 var createScene = function () {
@@ -45,12 +45,12 @@ var createScene = function () {
             }
             if (isArtifactMode && selectedArtifact) {
                 switch (evt.keyCode) {
-                    case 90: keysPressed.up = true; break;    // Z
-                    case 83: keysPressed.down = true; break;  // S
-                    case 81: keysPressed.left = true; break;  // Q
-                    case 68: keysPressed.right = true; break; // D
-                    case 32: keysPressed.jump = true; break;  // Espace
-                    case 70: resetView(); break;              // F pour quitter
+                    case 90: keysPressed.up = true; break;
+                    case 83: keysPressed.down = true; break;
+                    case 81: keysPressed.left = true; break;
+                    case 68: keysPressed.right = true; break;
+                    case 32: keysPressed.jump = true; break;
+                    case 70: resetView(); break;
                 }
             }
         }
@@ -59,11 +59,11 @@ var createScene = function () {
     window.addEventListener("keyup", function (evt) {
         if (isArtifactMode) {
             switch (evt.keyCode) {
-                case 90: keysPressed.up = false; break;    // Z
-                case 83: keysPressed.down = false; break;  // S
-                case 81: keysPressed.left = false; break;  // Q
-                case 68: keysPressed.right = false; break; // D
-                case 32: keysPressed.jump = false; break;  // Espace
+                case 90: keysPressed.up = false; break;
+                case 83: keysPressed.down = false; break;
+                case 81: keysPressed.left = false; break;
+                case 68: keysPressed.right = false; break;
+                case 32: keysPressed.jump = false; break;
             }
         }
     });
@@ -443,7 +443,7 @@ var createScene = function () {
         artifacts.forEach(artifact => {
             artifact.metadata.isRotating = false;
             artifact.metadata.velocityY = 0;
-            artifact.position.y = artifact.metadata.initialY; // Réinitialiser la position Y
+            artifact.position.y = artifact.metadata.initialY;
         });
     }
 
@@ -486,7 +486,6 @@ var createScene = function () {
             new BABYLON.QuadraticEase(),
             () => {
                 if (selectedArtifact && !isArtifactMode) {
-                    canvas.requestPointerLock();
                     canvas.style.cursor = "default";
                     document.getElementById("crosshair").style.display = "none";
                 }
@@ -600,7 +599,7 @@ var createScene = function () {
             canvas.requestPointerLock();
         } else if (evt.key === "a" && modal) {
             modal.style.display = "flex";
-        } else if (evt.key === "r") { // Touche R pour recharger partout
+        } else if (evt.key === "r") {
             location.reload(true);
         }
     });
@@ -611,14 +610,19 @@ var createScene = function () {
                 canvas.requestPointerLock();
                 canvas.style.cursor = "none";
                 document.getElementById("crosshair").style.display = "block";
+            } else if (selectedArtifact && !isArtifactMode) {
+                isMouseDown = true;
+                canvas.style.cursor = "grabbing";
             }
-            isMouseDown = true;
         }
     });
 
     document.addEventListener("mouseup", function (evt) {
         if (evt.button === 0) {
             isMouseDown = false;
+            if (selectedArtifact && !isArtifactMode) {
+                canvas.style.cursor = "grab";
+            }
         }
     });
 
@@ -629,6 +633,9 @@ var createScene = function () {
         } else if (document.pointerLockElement === canvas && isArtifactMode) {
             canvas.style.cursor = "none";
             document.getElementById("crosshair").style.display = "block";
+        } else if (selectedArtifact && !isArtifactMode) {
+            canvas.style.cursor = "grab";
+            document.getElementById("crosshair").style.display = "none";
         } else {
             canvas.style.cursor = "default";
             document.getElementById("crosshair").style.display = "none";
@@ -636,7 +643,7 @@ var createScene = function () {
     });
 
     document.addEventListener("mousemove", function (evt) {
-        if (!selectedArtifact && !isArtifactMode) {
+        if (!selectedArtifact && !isArtifactMode && document.pointerLockElement === canvas) {
             var sensitivity = 0.002;
             var deltaX = evt.movementX * sensitivity;
             var deltaY = evt.movementY * sensitivity;
